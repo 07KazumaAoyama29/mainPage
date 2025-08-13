@@ -11,7 +11,7 @@ IS_PRODUCTION = 'RENDER' in os.environ
 if IS_PRODUCTION:
     # --- 本番環境 (Render) の設定 ---
     SECRET_KEY = os.environ.get('SECRET_KEY')
-    DEBUG = False
+    DEBUG = True
     ALLOWED_HOSTS = [os.environ.get('RENDER_EXTERNAL_HOSTNAME')]
     
     DATABASES = {
