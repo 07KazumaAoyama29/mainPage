@@ -1,0 +1,42 @@
+/* mainpages/static/mainpages/style.css */
+
+.timeline {
+    border-left: 2px solid #e9ecef; /* タイムラインの縦線 */
+    padding-left: 1.5rem;
+    position: relative;
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 2rem;
+}
+
+/* タイムラインの丸いマーカー */
+.timeline-item::before {
+    content: '';
+    background: #0d6efd; /* BootstrapのPrimaryカラー */
+    width: 1rem;
+    height: 1rem;
+    border-radius: 50%;
+    position: absolute;
+    left: -2.05rem; /* 縦線の上に配置 */
+    top: 0.25rem;
+    border: 3px solid #fff;
+}
+
+.timeline-item-period {
+    display: block;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #6c757d; /* BootstrapのSecondaryカラー */
+}
+
+.timeline-item-title {
+    margin-top: 0.25rem;
+    margin-bottom: 0.5rem;
+}
+
+.timeline-item-description {
+    color: #495057;
+    margin-bottom: 0;
+}
