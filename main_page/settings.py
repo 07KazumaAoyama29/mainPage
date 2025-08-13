@@ -1,23 +1,41 @@
-# settings.py
-
 from pathlib import Path
 import os
 import dj_database_url
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
+# ▼▼▼ 環境を判断するスイッチ ▼▼▼
+# Renderの環境では'RENDER'という環境変数が設定されている
+IS_PRODUCTION = 'RENDER' in os.environ
 
-# SECRET_KEYはRenderの環境変数から読み込む
-SECRET_KEY = os.environ.get('SECRET_KEY')
+if IS_PRODUCTION:
+    # --- 本番環境 (Render) の設定 ---
+    SECRET_KEY = os.environ.get('SECRET_KEY')
+    DEBUG = False
+    ALLOWED_HOSTS = [os.environ.get('RENDER_EXTERNAL_HOSTNAME')]
+    
+    DATABASES = {
+        'default': dj_database_url.config(
+            default=os.environ.get('DATABASE_URL'),
+            conn_max_age=600
+        )
+    }
+    
+    STATIC_ROOT = BASE_DIR / 'staticfiles'
+    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-# DEBUGモードは本番環境では必ずFalseに
-DEBUG = False
+else:
+    # --- 開発環境 (あなたのPC) の設定 ---
+    SECRET_KEY = 'django-insecure-your-local-secret-key' # ローカル用の簡単なキー
+    DEBUG = True
+    ALLOWED_HOSTS = []
 
-# 正しいALLOWED_HOSTSの設定
-ALLOWED_HOSTS = ['main-page-n44z.onrender.com', 'www.akamafu.com']
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
 
 # Application definition
