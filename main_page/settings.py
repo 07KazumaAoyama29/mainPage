@@ -52,6 +52,11 @@ INSTALLED_APPS = [
     'whitenoise.runserver_nostatic', # WhiteNoiseを追加
     'django.contrib.staticfiles',
     'mainpages.apps.MainpagesConfig',
+    'django_bootstrap5',
+    #学習ノート
+    'learning_logs.apps.LearningLogsConfig',
+    #ユーザー認証
+    'accounts.apps.AccountsConfig',
 ]
 
 MIDDLEWARE = [
@@ -85,17 +90,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'main_page.wsgi.application'
 
-
-# Database
-# RenderのPostgreSQLに接続する設定
-DATABASES = {
-    'default': dj_database_url.config(
-        default=os.environ.get('DATABASE_URL'),
-        conn_max_age=600
-    )
-}
-
-
 # Password validation
 # ... (この部分は変更なし) ...
 AUTH_PASSWORD_VALIDATORS = [
@@ -119,3 +113,7 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 # Default primary key field type
 # ... (この部分は変更なし) ...
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# ログイン・ログアウト後のリダイレクト先
+LOGIN_REDIRECT_URL = "learning_logs:topics" # ログイン後は学習ノートのトピック一覧へ
+LOGOUT_REDIRECT_URL = "mainpages:home" # ログアウト後はサイトのトップページへ
