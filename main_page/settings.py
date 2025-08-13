@@ -26,7 +26,7 @@ SECRET_KEY = 'django-insecure-ojb_03i@eg+(kw$abacn7fuho)*z7tr_@3suau7d7ed_63m&=2
 DEBUG = False
 
 # とりあえずRenderのドメインと、将来使うかもしれないカスタムドメインを追加
-ALLOWED_HOSTS = ['your-service-name.onrender.com', 'www.akamafu.com']
+ALLOWED_HOSTS = ['https://main-page-n44z.onrender.com', 'www.akamafu.com']
 
 
 # Application definition
