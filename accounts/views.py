@@ -15,7 +15,7 @@ def register(request):
             new_user = form.save()
             #ユーザーをログインさせてホームページにリダイレクトする
             login(request, new_user)
-            return redirect("learning_logs:index")
+            return redirect("learning_logs:knowledge_list")
         
     #空または無効のフォームを表示する
     context = {"form": form}
