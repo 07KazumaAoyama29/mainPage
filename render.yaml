@@ -1,6 +1,6 @@
 services:
-  - type: web
-    name: main-page  # Render上でのサービス名（自由に変更可）
+  - type: web        # servicesの下なので、2スペースのインデント
+    name: main-page  # typeと同じ階層なので、同じインデント
     env: python
     buildCommand: |
       pip install -r requirements.txt
@@ -8,5 +8,5 @@ services:
       python manage.py migrate
     startCommand: "gunicorn main_page.wsgi:application"
     envVars:
-      - key: SECRET_KEY
-        generateValue: true
+      - key: SECRET_KEY     # envVarsの下なので、さらに2スペース（合計4）
+        generateValue: true # keyの下なので、さらに2スペース（合計6）
