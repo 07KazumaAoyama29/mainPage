@@ -1,0 +1,115 @@
+{% extends "learning_logs/base.html" %}
+
+{% block page_header %}
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><a href="{% url 'learning_logs:knowledge_list' %}">トップ</a></li>
+      {% for crumb in breadcrumb_trail %}
+        {% if forloop.last %}
+          <li class="breadcrumb-item active" aria-current="page">{{ crumb.title }}</li>
+        {% else %}
+          <li class="breadcrumb-item"><a href="{% url 'learning_logs:knowledge_detail' knowledge_id=crumb.pk %}">{{ crumb.title }}</a></li>
+        {% endif %}
+      {% endfor %}
+    </ol>
+  </nav>
+
+  <h3>
+    {{ knowledge.title }}
+    {% if knowledge.is_public %}
+      <span class="badge bg-success ms-2">公開</span>
+    {% else %}
+      <span class="badge bg-secondary ms-2">非公開</span>
+    {% endif %}
+    <a href="{% url 'learning_logs:edit_knowledge' pk=knowledge.pk %}" class="btn btn-secondary">編集</a>
+    <form action="{% url 'learning_logs:delete_knowledge' pk=knowledge.pk %}" method="post" class="d-inline-block">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-danger" onclick="return confirm('本当にこの投稿を削除してもよろしいですか？');">削除</button>
+    </form>
+    <a href="{% url 'learning_logs:new_child_knowledge' parent_id=knowledge.pk %}" class="btn btn-primary float-end">新しい知識を追加する</a>
+  </h3>
+{% endblock page_header %}
+
+{% block content %}
+  <div class="mb-3">
+    {% for tag in knowledge.tags.all %}
+      <a href="{% url 'learning_logs:tag_list' tag_name=tag.name %}" class="badge bg-secondary text-decoration-none">{{ tag.name }}</a>
+    {% endfor %}
+  </div>
+
+  {% if knowledge.content %}
+    <div class="card mb-4">
+      <div class="card-body">
+        <div class="markdown-content">
+          {{ html_content|safe }}
+        </div>
+      </div>
+    </div>
+  {% endif %}
+
+  {% if children %}
+    <div class="row row-cols-1 row-cols-md-2 g-4">
+      {% for child in children %}
+        <div class="col">
+          <div class="card h-100">
+            <div class="card-body">
+              <h5 class="card-title">
+                <a href="{% url 'learning_logs:knowledge_detail' knowledge_id=child.pk %}" class="link-primary text-decoration-underline">
+                  {{ child.title }}
+                </a>
+                {% if child.is_public %}
+                  <span class="badge bg-success ms-2">公開</span>
+                {% else %}
+                  <span class="badge bg-secondary ms-2">非公開</span>
+                {% endif %}
+              </h5>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p>この要素には子要素がありません。</p>
+  {% endif %}
+
+  <hr>
+  <h4>コメント</h4>
+
+  {% if comments %}
+    <ul class="list-unstyled">
+    {% for comment in comments %}
+      <li class="mb-3 p-3 bg-light border rounded">
+        <p class="mb-1">{{ comment.text|linebreaks }}</p>
+        <small class="text-muted d-flex justify-content-between align-items-center">
+          <span>
+            投稿者: {{ comment.user.username }} / 投稿日時: {{ comment.date_added }}
+          </span>
+          {% if comment.user == user %}
+            <form action="{% url 'learning_logs:delete_comment' comment_id=comment.pk %}" method="post">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('本当にこのコメントを削除してもよろしいですか？');">削除</button>
+            </form>
+          {% endif %}
+        </small>
+      </li>
+    {% endfor %}
+    </ul>
+  {% else %}
+    <p>まだコメントはありません。</p>
+  {% endif %}
+
+  {% if user.is_authenticated %}
+    <div class="mt-4">
+      <h5>コメントを投稿する</h5>
+      <form action="{% url 'learning_logs:knowledge_detail' knowledge_id=knowledge.pk %}" method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button name="submit" class="btn btn-primary mt-2">投稿する</button>
+      </form>
+    </div>
+  {% else %}
+    <div class="mt-4">
+      <p>コメントを投稿するには<a href="{% url 'accounts:login' %}">ログイン</a>してください。</p>
+    </div>
+  {% endif %}
+{% endblock content %}

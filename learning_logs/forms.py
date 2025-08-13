@@ -1,16 +1,25 @@
 from django import forms
+from .models import Knowledge, Tag, Comment
 
-from .models import Topic, Entry
-
-class TopicForm(forms.ModelForm):
+class KnowledgeForm(forms.ModelForm):
     class Meta:
-        model = Topic
-        fields = ["text"]
-        labels = {"text": ""}
+        model = Knowledge
+        fields = ['title', 'content', 'parent', 'tags', 'is_public']  # 'is_public'フィールドを追加
+        widgets = {
+            'tags': forms.CheckboxSelectMultiple(),
+            'is_public': forms.CheckboxInput(), # チェックボックスとして表示
+        }
 
-class EntryForm(forms.ModelForm):
+# CommentFormクラスの追加
+class CommentForm(forms.ModelForm):
     class Meta:
-        model = Entry
-        fields = ["text"]
-        labels = {"text": ""}
-        widgets = {"text": forms.Textarea(attrs={"cols": 80})}
+        model = Comment
+        fields = ['text']
+        labels = {'text': 'コメント'}
+        widgets = {'text': forms.Textarea(attrs={'cols': 80})}
+
+# TagFormクラスの追加
+class TagForm(forms.ModelForm):
+    class Meta:
+        model = Tag
+        fields = ['name']

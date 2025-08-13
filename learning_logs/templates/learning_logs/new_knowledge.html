@@ -1,0 +1,30 @@
+{% extends "learning_logs/base.html" %}
+
+{% block content %}
+    {% if parent %}
+        <h3>「{{ parent.title }}」の下に新しい知識を追加</h3>
+    {% else %}
+        <h3>新しい知識を追加</h3>
+    {% endif %}
+
+    <form action="{% if parent %}{% url 'learning_logs:new_child_knowledge' parent_id=parent.pk %}{% else %}{% url 'learning_logs:new_knowledge' %}{% endif %}" method="post">
+        {% csrf_token %}
+        <div class="mb-3">
+          {{ form.title.label_tag }}
+          {{ form.title }}
+        </div>
+        <div class="mb-3">
+          {{ form.content.label_tag }}
+          {{ form.content }}
+        </div>
+        <div class="mb-3">
+          {{ form.tags.label_tag }}
+          {{ form.tags }}
+        </div>
+        <div class="mb-3 form-check">
+          {{ form.is_public }}
+          {{ form.is_public.label_tag }}
+        </div>
+        <button name="submit" class="btn btn-primary">保存</button>
+    </form>
+{% endblock content %}

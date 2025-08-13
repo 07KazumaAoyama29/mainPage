@@ -1,0 +1,44 @@
+{% extends "learning_logs/base.html" %}
+
+{% block page_header %}
+  <div class="d-flex justify-content-between align-items-center">
+        <h2>すべての知識</h2>
+        {% if user.is_authenticated %}
+            <div>
+                {% if show_others == 'false' %}
+                    <a href="{% url 'learning_logs:knowledge_list' %}" class="btn btn-outline-secondary">他ユーザーの公開知識も表示</a>
+                {% else %}
+                    <a href="{% url 'learning_logs:knowledge_list_others' show_others_flag='false' %}" class="btn btn-outline-secondary">他ユーザーの公開知識は非表示</a>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+{% endblock page_header %}
+
+{% block content %}
+  {% if knowledges %}
+    <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+      {% for knowledge in knowledges %}
+        <div class="col">
+          <div class="card h-100">
+            <div class="card-body">
+              <h5 class="card-title">
+                <a href="{% url 'learning_logs:knowledge_detail' knowledge_id=knowledge.pk %}" class="link-primary text-decoration-underline">
+                  {{ knowledge.title }}
+                </a>
+                {% if knowledge.is_public %}
+                  <span class="badge bg-success ms-2">公開</span>
+                {% else %}
+                  <span class="badge bg-secondary ms-2">非公開</span>
+                {% endif %}
+              </h5>
+              <p class="card-text text-muted">最終更新日: {{ knowledge.date_added }}</p>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p>まだ知識が登録されていません。</p>
+  {% endif %}
+{% endblock content %}

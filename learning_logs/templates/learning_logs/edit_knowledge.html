@@ -1,0 +1,36 @@
+{% extends "learning_logs/base.html" %}
+
+{% block content %}
+    <h3>投稿を編集する</h3>
+    <p>編集内容を送信してください。</p>
+
+    <form action="{% url 'learning_logs:edit_knowledge' pk=knowledge.pk %}" method="post">
+        {% csrf_token %}
+        <div class="mb-3">
+          {{ form.title.label_tag }}
+          {{ form.title }}
+        </div>
+        <div class="mb-3">
+          {{ form.content.label_tag }}
+          {{ form.content }}
+        </div>
+        <div class="mb-3">
+          {{ form.tags.label_tag }}
+          {{ form.tags }}
+        </div>
+        <div class="mb-3 form-check">
+          {{ form.is_public }}
+          {{ form.is_public.label_tag }}
+        </div>
+        {{ form.parent }} 
+
+        <button name="submit" class="btn btn-primary">保存</button>
+    </form>
+
+    <hr>
+    
+    <form action="{% url 'learning_logs:delete_knowledge' pk=knowledge.pk %}" method="post" class="mt-3">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-danger" onclick="return confirm('本当にこの投稿を削除してもよろしいですか？');">削除</button>
+    </form>
+{% endblock content %}

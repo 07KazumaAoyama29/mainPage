@@ -1,0 +1,16 @@
+{% extends "learning_logs/base.html" %}
+
+{% block page_header %}
+  <h2>新しいタグを作成する</h2>
+{% endblock page_header %}
+
+{% block content %}
+  <form action="{% url 'learning_logs:tag_create' %}" method="post">
+    {% csrf_token %}
+    <div class="mb-3">
+      {{ form.name.label_tag }}
+      {{ form.name }}
+    </div>
+    <button name="submit" class="btn btn-primary">保存</button>
+  </form>
+{% endblock content %}

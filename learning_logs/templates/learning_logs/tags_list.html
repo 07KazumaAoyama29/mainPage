@@ -1,0 +1,26 @@
+{% extends "learning_logs/base.html" %}
+
+{% block page_header %}
+  <h2>タグ一覧</h2>
+{% endblock page_header %}
+
+{% block content %}
+  <div class="mb-4">
+    <a href="{% url 'learning_logs:tag_create' %}" class="btn btn-primary">新しいタグを追加する</a>
+  </div>
+
+  {% if tags %}
+    <ul class="list-group">
+      {% for tag in tags %}
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+          <a href="{% url 'learning_logs:tag_list' tag_name=tag.name %}" class="link-primary text-decoration-underline fs-5">
+            {{ tag.name }}
+          </a>
+          <span class="badge bg-primary rounded-pill">{{ tag.num_knowledges }}</span>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p>まだタグが登録されていません。</p>
+  {% endif %}
+{% endblock content %}
