@@ -66,9 +66,10 @@
       {% if user.is_authenticated %}
         <form action="{% url 'accounts:logout' %}" method='post'>
           {% csrf_token %}
-          <button name='submit' class='btn btn-outline-secondary btn-sm'>ログアウト</button>
+          <button name='submit' class='btn btn-outline-secondary btn-sm ms-2'>ログアウト</button>
         </form>
       {% endif %}
+            <a class="btn btn-info btn-sm ms-2" href="/">メインページ</a>
     </div>
   </div>
 </nav>
