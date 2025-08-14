@@ -3,7 +3,9 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from .models import Knowledge, Tag, Comment
-from .forms import KnowledgeForm , CommentForm, TagForm 
+from todo.models import Todo
+from .forms import KnowledgeForm , CommentForm, TagForm
+from todo.forms import TodoForm
 from django.http import Http404
 from django import forms
 
@@ -39,12 +41,36 @@ def knowledge_list(request, show_others_flag=None):
 
 # 詳細表示ビュー
 def knowledge_detail(request, knowledge_id):
-    """特定のKnowledgeオブジェクトを1件だけ取得し、その子要素と階層パスも取得する"""
+    """特定のKnowledgeオブジェクトを1件だけ取得し、その子要素とコメント、Todo、階層パスも取得する"""
     knowledge = get_object_or_404(Knowledge, pk=knowledge_id)
     
     # アクセス制御のロジック
     if not knowledge.is_public and knowledge.owner != request.user:
         raise Http404
+
+    # コメントとTodoフォームの処理
+    if request.method == 'POST':
+        # フォームがCommentFormかTodoFormか判別
+        if 'comment-submit' in request.POST:
+            form = CommentForm(data=request.POST)
+            if form.is_valid():
+                new_comment = form.save(commit=False)
+                new_comment.knowledge = knowledge
+                new_comment.user = request.user
+                new_comment.save()
+            return redirect('learning_logs:knowledge_detail', knowledge_id=knowledge.pk)
+
+        elif 'todo-submit' in request.POST:
+            form = TodoForm(data=request.POST)
+            if form.is_valid():
+                new_todo = form.save(commit=False)
+                new_todo.knowledge = knowledge
+                new_todo.owner = request.user
+                new_todo.save()
+            return redirect('learning_logs:knowledge_detail', knowledge_id=knowledge.pk)
+    else:
+        comment_form = CommentForm()
+        todo_form = TodoForm()
 
     # 階層パスを取得
     breadcrumb_trail = []
@@ -58,6 +84,12 @@ def knowledge_detail(request, knowledge_id):
         Q(is_public=True) | Q(owner=request.user)
     ).order_by('id')
     
+    # コメント一覧を取得
+    comments = knowledge.comments.all().order_by('-date_added')
+
+    # Todo一覧を取得
+    todos = Todo.objects.filter(knowledge=knowledge, owner=request.user).order_by('deadline')
+
     # MarkdownをHTMLに変換
     html_content = markdown.markdown(knowledge.content, extensions=['fenced_code', 'tables'])
     
@@ -65,21 +97,34 @@ def knowledge_detail(request, knowledge_id):
         'knowledge': knowledge,
         'html_content': html_content,
         'children': children,
+        'comments': comments,
+        'comment_form': comment_form,
+        'todos': todos,
+        'todo_form': todo_form,
         'breadcrumb_trail': breadcrumb_trail
     }
     return render(request, 'learning_logs/knowledge_detail.html', context)
 
 # 新規作成ビュー
-def new_knowledge(request, parent_id=None):
+@login_required
+def new_knowledge(request, parent_id=None, knowledge_type=None):
     """新しい知識を追加する"""
     parent_knowledge = None
     if parent_id:
         parent_knowledge = get_object_or_404(Knowledge, pk=parent_id)
-        # 親要素が存在する場合、その所有者もチェック
+        # ユーザーが所有者であることを確認する関数
         check_knowledge_owner(request, parent_knowledge)
 
     if request.method != 'POST':
-        form = KnowledgeForm()
+        initial_data = {}
+        if knowledge_type:
+            initial_data['knowledge_type'] = knowledge_type
+        
+        # knowledge_typeの値に応じてcontentの初期値を設定
+        if knowledge_type == 'book' or knowledge_type == 'paper':
+            initial_data['content'] = "## おすすめ度:\n\n ★★★★★ \n\n## 詳細:\n\n\n## 章構成:\n\n\n## キーワード:\n\n"
+        
+        form = KnowledgeForm(initial=initial_data)
     else:
         form = KnowledgeForm(data=request.POST)
         if form.is_valid():

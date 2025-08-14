@@ -4,13 +4,12 @@ from .models import Knowledge, Tag, Comment
 class KnowledgeForm(forms.ModelForm):
     class Meta:
         model = Knowledge
-        fields = ['title', 'content', 'parent', 'tags', 'is_public']  # 'is_public'フィールドを追加
+        fields = ['title', 'content', 'parent', 'tags', 'is_public', 'knowledge_type', 'page', 'size', 'author', 'isbn', 'genre']
         widgets = {
             'tags': forms.CheckboxSelectMultiple(),
-            'is_public': forms.CheckboxInput(), # チェックボックスとして表示
+            'is_public': forms.CheckboxInput(),
         }
 
-# CommentFormクラスの追加
 class CommentForm(forms.ModelForm):
     class Meta:
         model = Comment
@@ -18,7 +17,6 @@ class CommentForm(forms.ModelForm):
         labels = {'text': 'コメント'}
         widgets = {'text': forms.Textarea(attrs={'cols': 80})}
 
-# TagFormクラスの追加
 class TagForm(forms.ModelForm):
     class Meta:
         model = Tag

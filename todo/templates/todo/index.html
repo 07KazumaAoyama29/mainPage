@@ -1,0 +1,7 @@
+<h1>index.html表示してます</h1>
+    <p>{{ insert_forms|linebreaksbr }}</p>
+    <form action="" method="post">
+        {% csrf_token %}
+        {{ form.as_table }}
+        <input type="submit" value="送信">
+    </form>

@@ -1,21 +1,16 @@
 {% extends "learning_logs/base.html" %}
 
 {% block page_header %}
-  <div class="d-flex justify-content-between align-items-center">
-        <h2>すべての知識</h2>
-        {% if user.is_authenticated %}
-            <div>
-                {% if show_others == 'false' %}
-                    <a href="{% url 'learning_logs:knowledge_list' %}" class="btn btn-outline-secondary">他ユーザーの公開知識も表示</a>
-                {% else %}
-                    <a href="{% url 'learning_logs:knowledge_list_others' show_others_flag='false' %}" class="btn btn-outline-secondary">他ユーザーの公開知識は非表示</a>
-                {% endif %}
-            </div>
-        {% endif %}
-    </div>
+  <h2>すべての知識</h2>
 {% endblock page_header %}
 
 {% block content %}
+  <div class="mb-4">
+    <a href="{% url 'learning_logs:new_knowledge' %}" class="btn btn-primary">
+  新しい知識を追加する
+</a>
+  </div>
+
   {% if knowledges %}
     <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
       {% for knowledge in knowledges %}

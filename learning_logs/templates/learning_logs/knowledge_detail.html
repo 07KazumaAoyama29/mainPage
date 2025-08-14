@@ -26,8 +26,17 @@
       {% csrf_token %}
       <button type="submit" class="btn btn-danger" onclick="return confirm('本当にこの投稿を削除してもよろしいですか？');">削除</button>
     </form>
-    <a href="{% url 'learning_logs:new_child_knowledge' parent_id=knowledge.pk %}" class="btn btn-primary float-end">新しい知識を追加する</a>
-  </h3>
+    <div class="dropdown d-inline-block">
+        <button class="btn btn-primary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+          新しい知識を追加する
+        </button>
+        <ul class="dropdown-menu">
+          <li><a class="dropdown-item" href="{% url 'learning_logs:new_child_knowledge' parent_id=knowledge.pk %}">一般</a></li>
+          <li><a class="dropdown-item" href="{% url 'learning_logs:new_child_knowledge_with_type' parent_id=knowledge.pk knowledge_type='book' %}">書籍</a></li>
+          <li><a class="dropdown-item" href="{% url 'learning_logs:new_child_knowledge_with_type' parent_id=knowledge.pk knowledge_type='paper' %}">論文</a></li>
+        </ul>
+      </div>
+  </h2>
 {% endblock page_header %}
 
 {% block content %}
@@ -103,8 +112,8 @@
       <h5>コメントを投稿する</h5>
       <form action="{% url 'learning_logs:knowledge_detail' knowledge_id=knowledge.pk %}" method="post">
         {% csrf_token %}
-        {{ form.as_p }}
-        <button name="submit" class="btn btn-primary mt-2">投稿する</button>
+        {{ comment_form.as_p }}
+        <button name="comment-submit" class="btn btn-primary mt-2">投稿する</button>
       </form>
     </div>
   {% else %}

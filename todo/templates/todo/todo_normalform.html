@@ -1,0 +1,13 @@
+{% extends 'todo/base.html' %}
+
+{% block header %}
+<h1>タスクの種類の選択</h1>
+{% endblock header %}
+
+{% block content %}
+<a class="btn btn-outline-secondary" href="{% url 'create' %}" role="button">一般</a>
+<a class="btn btn-outline-secondary" href="{% url 'bookcreate' %}" role="button">読書</a>
+<a class="btn btn-outline-secondary" href="{% url 'papercreate' %}" role="button">論文</a>
+<a class="btn btn-outline-secondary" href="{% url 'gymcreate' %}" role="button">ジム</a>
+<a class="btn btn-outline-secondary" href="{% url 'baitocreate' %}" role="button">バイト</a>
+{% endblock content %}

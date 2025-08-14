@@ -38,6 +38,21 @@ class Knowledge(models.Model):
     # is_publicフィールドを追加
     is_public = models.BooleanField(default=False)
 
+    # 知識のタイプを保存するフィールド
+    KNOWLEDGE_TYPES = [
+        ('normal', '一般'),
+        ('book', '書籍'),
+        ('paper', '論文'),
+    ]
+    knowledge_type = models.CharField(max_length=10, choices=KNOWLEDGE_TYPES, default='normal')
+
+    # BookとPaperから移植するフィールド
+    page = models.IntegerField("ページ数", null=True, blank=True)
+    size = models.IntegerField("1ページの大きさ", null=True, blank=True)
+    author = models.CharField("著者名", max_length=200, null=True, blank=True)
+    isbn = models.CharField("ISBN", max_length=200, null=True, blank=True)
+    genre = models.CharField("ジャンル", max_length=200, null=True, blank=True)
+
     def __str__(self):
         return self.title
 

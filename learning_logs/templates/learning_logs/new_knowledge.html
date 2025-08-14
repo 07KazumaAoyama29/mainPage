@@ -7,24 +7,77 @@
         <h3>新しい知識を追加</h3>
     {% endif %}
 
-    <form action="{% if parent %}{% url 'learning_logs:new_child_knowledge' parent_id=parent.pk %}{% else %}{% url 'learning_logs:new_knowledge' %}{% endif %}" method="post">
+    <form action="" method="post">
         {% csrf_token %}
+        {% if parent %}
+            <input type="hidden" name="parent_id" value="{{ parent.pk }}">
+        {% endif %}
+
+        <div class="mb-3">
+          知識の種類:  {{ form.knowledge_type }}
+        </div>
         <div class="mb-3">
           {{ form.title.label_tag }}
-          {{ form.title }}
+          <div>{{ form.title }}</div>
         </div>
         <div class="mb-3">
           {{ form.content.label_tag }}
-          {{ form.content }}
+          <div>{{ form.content }}</div>
         </div>
         <div class="mb-3">
           {{ form.tags.label_tag }}
-          {{ form.tags }}
+          <div>{{ form.tags }}</div>
         </div>
+        <div class="mb-3">公開設定:
         <div class="mb-3 form-check">
           {{ form.is_public }}
-          {{ form.is_public.label_tag }}
+          <label class="form-check-label" for="{{ form.is_public.id_for_label }}">
+            知識を公開する
+          </label>
         </div>
+        </div>
+
+        <div id="book-fields" style="display: none;">
+          <div class="mb-3">
+            {{ form.page.label_tag }}
+            <div>{{ form.page }}</div>
+          </div>
+          <div class="mb-3">
+            {{ form.size.label_tag }}
+            <div>{{ form.size }}</div>
+          </div>
+          <div class="mb-3">
+            {{ form.author.label_tag }}
+            <div>{{ form.author }}</div>
+          </div>
+          <div class="mb-3">
+            {{ form.isbn.label_tag }}
+            <div>{{ form.isbn }}</div>
+          </div>
+          <div class="mb-3">
+            {{ form.genre.label_tag }}
+            <div>{{ form.genre }}</div>
+          </div>
+        </div>
+        
         <button name="submit" class="btn btn-primary">保存</button>
     </form>
+
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        const knowledgeType = document.getElementById('id_knowledge_type');
+        const bookFields = document.getElementById('book-fields');
+
+        function toggleFields() {
+          if (knowledgeType.value === 'book' || knowledgeType.value === 'paper') {
+            bookFields.style.display = 'block';
+          } else {
+            bookFields.style.display = 'none';
+          }
+        }
+
+        knowledgeType.addEventListener('change', toggleFields);
+        toggleFields();
+      });
+    </script>
 {% endblock content %}

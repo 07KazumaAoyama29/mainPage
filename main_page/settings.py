@@ -53,6 +53,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'mainpages.apps.MainpagesConfig',
     'django_bootstrap5',
+    #Todoアプリ
+    'todo.apps.TodoConfig',
     #学習ノート
     'learning_logs.apps.LearningLogsConfig',
     #ユーザー認証
