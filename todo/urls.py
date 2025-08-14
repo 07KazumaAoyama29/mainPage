@@ -1,16 +1,20 @@
 from django.urls import path
 from . import views
-from .views import TodoUpdate, TodoDelete
+
+app_name = 'todo'
 
 urlpatterns = [
-    # Todoのリストと作成
-    path("", views.taskList, name="tasklist"),
-    path("create/", views.create, name="create"),
+    path("", views.calendar_view, name="calendar"),
+    path("api/events/", views.calendar_events, name="calendar_events"),
 
-    # Todoの更新と削除
-    path("update/<int:pk>", TodoUpdate.as_view(), name="update"),
-    path("delete/<int:pk>", TodoDelete.as_view(), name="delete"),
-    
-    # Todoの状態変更
-    path("state/<int:pk>", views.state, name="state"),
+    # スケジュール作成用
+    path("create-form/", views.schedule_create_form, name="create_form"),
+    path("create/", views.schedule_create, name="create"),
+
+    # スケジュール編集用
+    path("edit-form/<int:pk>/", views.schedule_edit_form, name="edit_form"),
+    path("update/<int:pk>/", views.schedule_update, name="update"),
+    path("task/<int:pk>/toggle/", views.toggle_task, name="toggle_task"),
+    path("schedule/<int:pk>/", views.schedule_detail, name="schedule_detail"),
+    path("api/update_time/", views.schedule_update_time, name="update_schedule_time"),
 ]

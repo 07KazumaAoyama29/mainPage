@@ -1,0 +1,15 @@
+{% extends 'todo/base.html' %}
+
+{% block header %}
+  <h2>{{ schedule.title }}</h2>
+  <p><small class="text-muted">{{ schedule.start_time }} - {{ schedule.end_time }}</small></p>
+{% endblock header %}
+
+{% block content %}
+  <div id="task-section">
+    {% include 'todo/partials/task_list_and_progress.html' %}
+  </div>
+
+  <hr>
+  <a href="{% url 'todo:calendar' %}">カレンダーに戻る</a>
+{% endblock content %}

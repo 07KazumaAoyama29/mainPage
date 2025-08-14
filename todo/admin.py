@@ -1,4 +1,5 @@
 from django.contrib import admin
-from .models import Todo
+from .models import Schedule, Task
 # Register your models here.
-admin.site.register(Todo)
+admin.site.register(Schedule)
+admin.site.register(Task)

@@ -1,0 +1,130 @@
+{% extends 'todo/base.html' %}
+
+{% block header %}
+  {# {% url 'todo:tasklist' %} はもう存在しないので、この行をコメントアウトします #}
+  {# <a href="{% url 'todo:tasklist' %}" class="btn btn-secondary mb-3">タスク一覧</a> #}
+
+  <button class="btn btn-primary mb-3"
+          hx-get="{% url 'todo:create_form' %}"
+          hx-target="#modal-content"
+          data-bs-toggle="modal"
+          data-bs-target="#modal">
+    新しいスケジュールを作成
+  </button>
+{% endblock header %}
+
+{% block content %}
+<div id='calendar'></div>
+{% endblock content %}
+
+{% block extra_js %}
+<script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.14/index.global.min.js'></script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    var calendarEl = document.getElementById('calendar');
+    var calendar = new FullCalendar.Calendar(calendarEl, {
+      initialView: 'timeGridWeek',
+      headerToolbar: {
+        left: 'prev,next today',
+        center: 'title',
+        right: 'dayGridMonth,timeGridWeek,timeGridDay'
+      },
+      locale: 'ja',
+      nowIndicator: true,
+      events: '{% url "todo:calendar_events" %}',
+      selectable: true,
+      dateClick: function(info) {
+        const url = `{% url 'todo:create_form' %}?start_time=${info.dateStr}`;
+        const modalContent = document.getElementById('modal-content');
+        const modal = new bootstrap.Modal(document.getElementById('modal'));
+        fetch(url)
+          .then(response => response.text())
+          .then(html => {
+            modalContent.innerHTML = html;
+            modal.show();
+          });
+      },
+      editable: true,
+      eventDrop: function(info) {
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        const data = {
+          id: info.event.id, // 'task_id' から 'id' に変更
+            start: info.event.startStr,
+            end: info.event.endStr,
+        };
+        fetch('{% url "todo:update_schedule_time" %}', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken
+          },
+          body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.status !== 'success') {
+            alert('エラーが発生しました。');
+            info.revert();
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          alert('通信エラーが発生しました。');
+          info.revert();
+        });
+      },
+      eventResize: function(info) {
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        const data = {
+          id: info.event.id, // 'task_id' から 'id' に変更
+          start: info.event.startStr,
+          end: info.event.endStr,
+        };
+        fetch('{% url "todo:update_schedule_time" %}', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken
+          },
+          body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.status !== 'success') {
+            alert('エラーが発生しました。');
+            info.revert();
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+          alert('通信エラーが発生しました。');
+          info.revert();
+        });
+      }
+    });
+    calendar.render();
+
+    const modalEl = document.getElementById('modal');
+    modalEl.addEventListener('click', function(event) {
+      let form = null;
+      let submitUrl = null;
+      if (event.target.id === 'submit-create-form') {
+        form = document.getElementById('create-task-form');
+        submitUrl = form.action;
+      }
+      else if (event.target.id === 'submit-edit-form') {
+        form = document.getElementById('edit-task-form');
+        submitUrl = form.action;
+      }
+      if (form && submitUrl) {
+        htmx.ajax('POST', submitUrl, {
+          target: '#modal-content',
+          swap: 'innerHTML',
+          source: form
+        });
+      }
+    });
+  });
+</script>
+{% endblock %}

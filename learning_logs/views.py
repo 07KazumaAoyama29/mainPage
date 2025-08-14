@@ -3,9 +3,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from .models import Knowledge, Tag, Comment
-from todo.models import Todo
 from .forms import KnowledgeForm , CommentForm, TagForm
-from todo.forms import TodoForm
 from django.http import Http404
 from django import forms
 
@@ -48,9 +46,8 @@ def knowledge_detail(request, knowledge_id):
     if not knowledge.is_public and knowledge.owner != request.user:
         raise Http404
 
-    # コメントとTodoフォームの処理
+    # コメントの処理
     if request.method == 'POST':
-        # フォームがCommentFormかTodoFormか判別
         if 'comment-submit' in request.POST:
             form = CommentForm(data=request.POST)
             if form.is_valid():
@@ -59,18 +56,8 @@ def knowledge_detail(request, knowledge_id):
                 new_comment.user = request.user
                 new_comment.save()
             return redirect('learning_logs:knowledge_detail', knowledge_id=knowledge.pk)
-
-        elif 'todo-submit' in request.POST:
-            form = TodoForm(data=request.POST)
-            if form.is_valid():
-                new_todo = form.save(commit=False)
-                new_todo.knowledge = knowledge
-                new_todo.owner = request.user
-                new_todo.save()
-            return redirect('learning_logs:knowledge_detail', knowledge_id=knowledge.pk)
     else:
         comment_form = CommentForm()
-        todo_form = TodoForm()
 
     # 階層パスを取得
     breadcrumb_trail = []
@@ -87,9 +74,6 @@ def knowledge_detail(request, knowledge_id):
     # コメント一覧を取得
     comments = knowledge.comments.all().order_by('-date_added')
 
-    # Todo一覧を取得
-    todos = Todo.objects.filter(knowledge=knowledge, owner=request.user).order_by('deadline')
-
     # MarkdownをHTMLに変換
     html_content = markdown.markdown(knowledge.content, extensions=['fenced_code', 'tables'])
     
@@ -99,8 +83,6 @@ def knowledge_detail(request, knowledge_id):
         'children': children,
         'comments': comments,
         'comment_form': comment_form,
-        'todos': todos,
-        'todo_form': todo_form,
         'breadcrumb_trail': breadcrumb_trail
     }
     return render(request, 'learning_logs/knowledge_detail.html', context)

@@ -1,10 +1,29 @@
-# forms.py
-
 from django import forms
-from .models import Todo
 
-# TodoFormをModelFormに書き換え
-class TodoForm(forms.ModelForm):
+# 新しいモデルをインポート
+from .models import Schedule, Task
+
+# ここに、これから新しいフォームを作成していきます
+class ScheduleForm(forms.ModelForm):
     class Meta:
-        model = Todo
-        fields = ['title', 'task_type', 'description', 'text1', 'text2', 'text3', 'text4', 'deadline', 'int1']
+        model = Schedule
+        fields = ['title', 'start_time', 'end_time']
+        widgets = {
+            'start_time': forms.DateTimeInput(attrs={'type': 'datetime-local', 'class': 'form-control'}),
+            'end_time': forms.DateTimeInput(attrs={'type': 'datetime-local', 'class': 'form-control'}),
+        }
+
+
+class TaskForm(forms.ModelForm):
+    class Meta:
+        model = Task
+        fields = ['title']
+        labels = {
+            'title': '', # ラベルを空にして、入力欄にプレースホルダーを表示させる
+        }
+        widgets = {
+            'title': forms.TextInput(attrs={
+                'class': 'form-control', 
+                'placeholder': '新しいタスクを入力してください'
+            }),
+        }
