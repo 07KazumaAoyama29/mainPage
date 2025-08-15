@@ -23,6 +23,8 @@ if IS_PRODUCTION:
             conn_max_age=600
         )
     }
+
+    DATABASES['default']['OPTIONS'] = {'DISABLE_SERVER_SIDE_CURSORS': True}
     
     STATIC_ROOT = BASE_DIR / 'staticfiles'
     STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
