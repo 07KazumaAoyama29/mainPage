@@ -1,0 +1,35 @@
+{# このdiv全体がチェックボックスクリックで置き換えられる #}
+<div id="action-item-{{ item.pk }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center {% if item.completed %}list-group-item-light{% endif %}">
+  
+  <div class="d-flex align-items-center">
+    <input class="form-check-input me-3" type="checkbox" {% if item.completed %}checked{% endif %}
+           style="transform: scale(1.5);"
+           hx-post="{% url 'todo:toggle_action_item' pk=item.pk %}"
+           hx-target="#action-item-{{ item.pk }}"
+           hx-swap="outerHTML">
+
+    <div>
+      <a href="{% url 'todo:action_item_detail' pk=item.pk %}" class="text-decoration-none {% if item.completed %}text-muted text-decoration-line-through{% else %}text-dark{% endif %}">
+        <h5 class="mb-1">{{ item.title }}</h5>
+      </a>
+      <p class="mb-1">
+        <span class="badge bg-secondary">{{ item.action_type }}</span>
+        {% if item.due_date %}
+          <small>期日: {{ item.due_date|date:"Y/m/d" }}</small>
+        {% endif %}
+      </p>
+      {% if item.completed %}
+        <span class="badge bg-info">完了</span>
+      {% elif item.is_scheduled %}
+        <span class="badge bg-success">スケジュール済み</span>
+      {% else %}
+        <span class="badge bg-warning text-dark">未スケジュール</span>
+      {% endif %}
+    </div>
+  </div>
+
+  <div>
+    <button class="btn btn-sm btn-outline-secondary me-2" ...>編集</button>
+    <button class="btn btn-sm btn-outline-danger" ...>削除</button>
+  </div>
+</div>

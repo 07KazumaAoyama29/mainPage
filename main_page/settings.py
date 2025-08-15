@@ -117,5 +117,5 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # ログイン・ログアウト後のリダイレクト先
-LOGIN_REDIRECT_URL = "learning_logs:knowledge_list" # ログイン後は学習ノートのトピック一覧へ
+LOGIN_REDIRECT_URL = "mainpages:home" # ログイン後は学習ノートのトピック一覧へ
 LOGOUT_REDIRECT_URL = "mainpages:home" # ログアウト後はサイトのトップページへ

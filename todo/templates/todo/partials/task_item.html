@@ -1,0 +1,49 @@
+<li id="task-{{ task.pk }}" class="list-group-item d-flex justify-content-between align-items-center">
+
+  <input type="hidden" name="task_pks" value="{{ task.pk }}">
+  {% if edit_form %}
+    <form class="d-flex flex-grow-1"
+          hx-post="{% url 'todo:task_update' pk=task.pk %}"
+          hx-target="#task-{{ task.pk }}"
+          hx-swap="outerHTML">
+      {% csrf_token %}
+      {{ edit_form.title }}
+      <button type="submit" class="btn btn-sm btn-success ms-2">保存</button>
+      <button type="button" class="btn btn-sm btn-secondary ms-1"
+              hx-get="{% url 'todo:schedule_detail' pk=task.schedule.pk %} #task-{{ task.pk }}"
+              hx-target="#task-{{ task.pk }}"
+              hx-swap="outerHTML">
+        X
+      </button>
+    </form>
+  {% else %}
+    <div class="d-flex align-items-center flex-grow-1">
+      <span class="drag-handle me-3">☰</span> 
+      
+      <div class="flex-grow-1">
+      <input class="form-check-input me-1" type="checkbox" {% if task.completed %}checked{% endif %}
+             hx-post="{% url 'todo:toggle_task' pk=task.pk %}"
+             hx-target="#task-section"
+             hx-swap="innerHTML">
+      <span class="{% if task.completed %}text-muted text-decoration-line-through{% endif %}">
+          {{ task.title }}
+        </span>
+    </div>
+    <div>
+      <button class="btn btn-sm btn-outline-secondary me-2"
+              hx-get="{% url 'todo:task_edit_form' pk=task.pk %}"
+              hx-target="#task-{{ task.pk }}"
+              hx-swap="outerHTML">
+        編集
+      </button>
+      <button class="btn btn-sm btn-outline-danger"
+              hx-post="{% url 'todo:task_delete' pk=task.pk %}"
+              hx-target="#task-{{ task.pk }}"
+              hx-swap="outerHTML"
+              hx-confirm="タスク「{{ task.title }}」を削除しますか？">
+        削除
+      </button>
+    </div>
+  </div>
+  {% endif %}
+</li>

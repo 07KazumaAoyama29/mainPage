@@ -1,0 +1,7 @@
+<div class="list-group">
+  {% for item in action_items %}
+    {% include 'todo/partials/action_item_list_item.html' with item=item %}
+  {% empty %}
+    <p class="text-center mt-3">該当する項目はありません。</p>
+  {% endfor %}
+</div>

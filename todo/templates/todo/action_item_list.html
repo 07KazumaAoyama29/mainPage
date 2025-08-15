@@ -1,0 +1,41 @@
+{% extends 'todo/base.html' %}
+
+{% block header %}
+  <div class="d-flex justify-content-between align-items-center">
+    <h3>やることリスト</h3>
+    <button class="btn btn-primary"
+            hx-get="{% url 'todo:action_item_create_form' %}"
+            hx-target="#modal-content"
+            data-bs-toggle="modal"
+            data-bs-target="#modal">
+      <i class="fas fa-plus"></i> 新規作成
+    </button>
+  </div>
+
+  <div class="btn-group mt-3" role="group">
+    <button type="button" class="btn btn-outline-primary"
+            hx-get="{% url 'todo:action_item_list' %}?filter=all"
+            hx-target="#action-item-list-container"
+            hx-swap="innerHTML">
+      すべて
+    </button>
+    <button type="button" class="btn btn-outline-primary"
+            hx-get="{% url 'todo:action_item_list' %}?filter=incomplete"
+            hx-target="#action-item-list-container"
+            hx-swap="innerHTML">
+      未完了
+    </button>
+    <button type="button" class="btn btn-outline-primary"
+            hx-get="{% url 'todo:action_item_list' %}?filter=completed"
+            hx-target="#action-item-list-container"
+            hx-swap="innerHTML">
+      完了済み
+    </button>
+  </div>
+{% endblock header %}
+
+{% block content %}
+  <div id="action-item-list-container">
+    {% include 'todo/partials/action_item_list_content.html' %}
+  </div>
+{% endblock content %}

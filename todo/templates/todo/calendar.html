@@ -1,9 +1,7 @@
 {% extends 'todo/base.html' %}
 
 {% block header %}
-  {# {% url 'todo:tasklist' %} はもう存在しないので、この行をコメントアウトします #}
-  {# <a href="{% url 'todo:tasklist' %}" class="btn btn-secondary mb-3">タスク一覧</a> #}
-
+  {% if user.is_authenticated %}
   <button class="btn btn-primary mb-3"
           hx-get="{% url 'todo:create_form' %}"
           hx-target="#modal-content"
@@ -11,6 +9,8 @@
           data-bs-target="#modal">
     新しいスケジュールを作成
   </button>
+  <a class="btn btn-secondary mb-3" href="{% url 'todo:action_item_list' %}">やることリスト</a>
+    {% endif %}
 {% endblock header %}
 
 {% block content %}
@@ -34,17 +34,25 @@
       nowIndicator: true,
       events: '{% url "todo:calendar_events" %}',
       selectable: true,
-      dateClick: function(info) {
-        const url = `{% url 'todo:create_form' %}?start_time=${info.dateStr}`;
-        const modalContent = document.getElementById('modal-content');
-        const modal = new bootstrap.Modal(document.getElementById('modal'));
-        fetch(url)
-          .then(response => response.text())
-          .then(html => {
-            modalContent.innerHTML = html;
-            modal.show();
-          });
-      },
+      // 日付や時間がクリックされた時に実行される関数
+  dateClick: function(info) {
+    // モーダルの中身（フォーム）を取得するためのURLを生成
+    const url = `{% url 'todo:create_form' %}?start_time=${info.dateStr}`;
+    
+    // モーダルのDOM要素を取得
+    const modalContent = document.getElementById('modal-content');
+    const modal = new bootstrap.Modal(document.getElementById('modal'));
+
+    // fetch APIを使って、サーバーからフォームのHTMLを取得
+    fetch(url)
+      .then(response => response.text())
+      .then(html => {
+        // 1. 取得したHTMLをモーダルの中身に挿入
+        modalContent.innerHTML = html;
+        // 2. モーダルを表示
+        modal.show();
+      });
+  },
       editable: true,
       eventDrop: function(info) {
         const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;

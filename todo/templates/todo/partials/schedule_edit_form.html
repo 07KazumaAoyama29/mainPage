@@ -1,0 +1,23 @@
+<form hx-post="{% url 'todo:update' pk=schedule.pk %}">
+  {% csrf_token %}
+  <div class="modal-header">
+    <h5 class="modal-title">スケジュールの編集</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+  </div>
+  <div class="modal-body">
+    {{ form.as_p }}
+  </div>
+  <div class="modal-footer justify-content-between">
+    {# --- 削除ボタンを追加 --- #}
+    <button type="button" class="btn btn-danger" 
+            hx-post="{% url 'todo:delete' pk=schedule.pk %}"
+            hx-confirm="このスケジュールを本当に削除しますか？"
+            hx-target="body">
+      削除
+    </button>
+    <div>
+      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">閉じる</button>
+      <button type="submit" class="btn btn-primary">保存</button>
+    </div>
+  </div>
+</form>

@@ -19,29 +19,14 @@
   </div>
 </form>
 
-{# --- タスク一覧 --- #}
-<h4 class="mt-4">タスクリスト</h4>
-<div id="task-list-container">
-  {% if tasks %}
-    <ul class="list-group">
-      {% for task in tasks %}
-        <li class="list-group-item d-flex justify-content-between align-items-center">
-          <span class="{% if task.completed %}text-muted text-decoration-line-through{% endif %}">
-            {{ task.title }}
-          </span>
-          {# --- チェックボックスのフォーム --- #}
-          <form hx-post="{% url 'todo:toggle_task' pk=task.pk %}"
-                hx-target="#task-section"
-                hx-swap="innerHTML">
-            {% csrf_token %}
-            <input type="checkbox" class="form-check-input" 
-                   onchange="this.form.requestSubmit()" 
-                   {% if task.completed %}checked{% endif %}>
-          </form>
-        </li>
-      {% endfor %}
-    </ul>
-  {% else %}
-    <p>このスケジュールにはまだタスクがありません。</p>
-  {% endif %}
+<div class="mt-4">
+  <h4>タスクリスト</h4>
+  
+  {# ▼▼▼ このulタグからHTMX関連の属性を一旦すべて削除します ▼▼▼ #}
+  <ul class="list-group" id="task-list">
+    
+    {% for task in tasks %}
+      {% include 'todo/partials/task_item.html' with task=task %}
+    {% endfor %}
+  </ul>
 </div>
