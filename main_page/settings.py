@@ -17,14 +17,22 @@ if IS_PRODUCTION:
     ALLOWED_HOSTS.append('akamafu.com')
     ALLOWED_HOSTS.append('www.akamafu.com') 
     
-    DATABASES = {
-        'default': dj_database_url.config(
-            default=os.environ.get('DATABASE_URL'),
-            conn_max_age=600
-        )
+    # DATABASE_URLから基本設定を読み込む
+    db_config = dj_database_url.config(
+        default=os.environ.get('DATABASE_URL'),
+        conn_max_age=600,
+        conn_health_checks=True,
+    )
+
+    # サーバーサイドカーソルを無効にするオプションを追加
+    db_config['OPTIONS'] = {
+        'DISABLE_SERVER_SIDE_CURSORS': True,
     }
 
-    DATABASES['default']['OPTIONS'] = {'DISABLE_SERVER_SIDE_CURSORS': True}
+    # 最終的な設定をDATABASESに割り当てる
+    DATABASES = {
+        'default': db_config
+    }
     
     STATIC_ROOT = BASE_DIR / 'staticfiles'
     STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
