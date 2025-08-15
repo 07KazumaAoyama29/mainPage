@@ -27,11 +27,8 @@ class ActionItemForm(forms.ModelForm):
 
 
 class ScheduleForm(forms.ModelForm):
-    
     action_item = forms.ModelChoiceField(
-        # 変更前: is_scheduled=False
-        # 変更後: completed=False と owner=request.user を追加（ビュー側で設定）
-        queryset=ActionItem.objects.none(), # ← まずは空にしておく
+        queryset=ActionItem.objects.none(), # 初期状態は空にしておく
         label="アクション",
         empty_label="選択してください"
     )
@@ -40,19 +37,16 @@ class ScheduleForm(forms.ModelForm):
         user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
         if user:
-            # データベースから一度に全ての選択肢を取得し、リストに変換する
-            items = ActionItem.objects.filter(owner=user, completed=False)
-            
-            # 取得したアイテムリストをフォームの選択肢(choices)として直接設定する
-            self.fields['action_item'].choices = [
-                (item.pk, str(item)) for item in items
-            ]
+            # 検証で使われるquerysetを正しく設定する
+            self.fields['action_item'].queryset = ActionItem.objects.filter(
+                owner=user, 
+                completed=False
+            )
 
     class Meta:
         model = Schedule
-        # ↓↓↓ fields の内容を大幅に変更します ↓↓↓
         fields = [
-            'action_item', # 'title' などの代わりに追加
+            'action_item',
             'start_time',
             'end_time',
         ]

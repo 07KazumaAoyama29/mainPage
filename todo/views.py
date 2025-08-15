@@ -49,26 +49,18 @@ def calendar_events(request):
     return JsonResponse(events, safe=False)
 
 @login_required
-def schedule_create_form(request):
+def schedule_create_form(request, *args, **kwargs):
     """モーダルに表示するための空のスケジュール作成フォームを返すビュー"""
     start_time_str = request.GET.get('start_time')
 
     initial_data = {}
-    if start_time_str:
-        try:
-            # ↓↓↓ この行が重要です ↓↓↓
-            # タイムゾーン情報を切り捨てて、"YYYY-MM-DDTHH:MM:SS"の部分だけを使う
-            clean_start_time_str = start_time_str[:19]
-
-            start_time_obj = datetime.fromisoformat(clean_start_time_str)
-
-            end_time_obj = start_time_obj + timedelta(hours=1)
-
-            initial_data['start_time'] = start_time_obj.strftime('%Y-%m-%dT%H:%M')
-            initial_data['end_time'] = end_time_obj.strftime('%Y-%m-%dT%H:%M')
-        except ValueError as e:
-            print(f"エラー発生: {e}")
+    
     form = ScheduleForm(initial=initial_data, user=request.user)
+    
+    # --- ▼▼▼ この一行を追加 ▼▼▼ ---
+    # データベースエラーを回避するため、選択肢をここで一度に読み込む
+    form.fields['action_item'].choices = list(form.fields['action_item'].choices)
+    
     context = {'form': form}
     return render(request, 'todo/partials/schedule_create_form.html', context)
 
@@ -108,8 +100,12 @@ def reorder_tasks(request):
 def schedule_edit_form(request, pk):
     """モーダルに表示するための、データが入ったスケジュール編集フォームを返す"""
     schedule = get_object_or_404(Schedule, pk=pk, owner=request.user)
-    # フォームにuserを渡すのを忘れない
-    form = ScheduleForm(instance=schedule, user=request.user) 
+    form = ScheduleForm(instance=schedule, user=request.user)
+    
+    # --- ▼▼▼ この一行を追加 ▼▼▼ ---
+    # データベースエラーを回避するため、選択肢をここで一度に読み込む
+    form.fields['action_item'].choices = list(form.fields['action_item'].choices)
+
     context = {'form': form, 'schedule': schedule}
     return render(request, 'todo/partials/schedule_edit_form.html', context)
 
