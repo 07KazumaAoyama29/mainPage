@@ -49,16 +49,29 @@ def calendar_events(request):
     return JsonResponse(events, safe=False)
 
 @login_required
-def schedule_create_form(request, *args, **kwargs):
+def schedule_create_form(request): # 引数から *args, **kwargs を削除
     """モーダルに表示するための空のスケジュール作成フォームを返すビュー"""
-    start_time_str = request.GET.get('start_time')
-
-    initial_data = {}
     
+    # --- ▼▼▼ この時間処理のブロックを復活させます ▼▼▼ ---
+    start_time_str = request.GET.get('start_time')
+    initial_data = {}
+    if start_time_str:
+        try:
+            # タイムゾーン情報などを切り捨てて、"YYYY-MM-DDTHH:MM:SS"の部分だけを使う
+            clean_start_time_str = start_time_str[:19]
+            start_time_obj = datetime.fromisoformat(clean_start_time_str)
+            end_time_obj = start_time_obj + timedelta(hours=1)
+            initial_data['start_time'] = start_time_obj.strftime('%Y-%m-%dT%H:%M')
+            initial_data['end_time'] = end_time_obj.strftime('%Y-%m-%dT%H:%M')
+        except (ValueError, TypeError):
+            # エラーが発生しても処理を続ける
+            pass
+    # --- ▲▲▲ ここまで復活 ▲▲▲ ---
+
+    # フォームを初期化
     form = ScheduleForm(initial=initial_data, user=request.user)
     
-    # --- ▼▼▼ この一行を追加 ▼▼▼ ---
-    # データベースエラーを回避するため、選択肢をここで一度に読み込む
+    # 本番環境のデータベースエラーを回避するための重要な一行
     form.fields['action_item'].choices = list(form.fields['action_item'].choices)
     
     context = {'form': form}
