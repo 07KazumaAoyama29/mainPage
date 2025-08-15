@@ -17,21 +17,12 @@ if IS_PRODUCTION:
     ALLOWED_HOSTS.append('akamafu.com')
     ALLOWED_HOSTS.append('www.akamafu.com') 
     
-    # RenderのデータベースURLを環境変数から取得
-    db_config = dj_database_url.config(
-        default=os.environ.get('DATABASE_URL'),
-        conn_max_age=600,
-        conn_health_checks=True,
-    )
-
-    # Now, add the Django-specific OPTIONS dictionary to this configuration.
-    db_config['OPTIONS'] = {
-        'DISABLE_SERVER_SIDE_CURSORS': True,
-    }
-
-    # Finally, assign the complete, modified configuration to the DATABASES setting.
     DATABASES = {
-        'default': db_config
+        'default': dj_database_url.config(
+            default=os.environ.get('DATABASE_URL'),
+            conn_max_age=600,
+            conn_health_checks=True,
+        )
     }
 
     

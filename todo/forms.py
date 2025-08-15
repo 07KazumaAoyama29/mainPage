@@ -37,15 +37,16 @@ class ScheduleForm(forms.ModelForm):
     )
 
     def __init__(self, *args, **kwargs):
-        # requestオブジェクトを受け取るためにpopで取り出す
-        user = kwargs.pop('user', None) 
-        super(ScheduleForm, self).__init__(*args, **kwargs)
+        user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
         if user:
-            # ログインユーザーが所有する、未完了のActionItemのみを選択肢にする
-            self.fields['action_item'].queryset = ActionItem.objects.filter(
-                owner=user, 
-                completed=False
-            )
+            # データベースから一度に全ての選択肢を取得し、リストに変換する
+            items = ActionItem.objects.filter(owner=user, completed=False)
+            
+            # 取得したアイテムリストをフォームの選択肢(choices)として直接設定する
+            self.fields['action_item'].choices = [
+                (item.pk, str(item)) for item in items
+            ]
 
     class Meta:
         model = Schedule
