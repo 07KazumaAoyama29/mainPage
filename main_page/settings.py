@@ -18,24 +18,20 @@ if IS_PRODUCTION:
     ALLOWED_HOSTS.append('www.akamafu.com') 
     
     # RenderのデータベースURLを環境変数から取得
-    DATABASE_URL = os.environ.get('DATABASE_URL')
+    db_config = dj_database_url.config(
+        default=os.environ.get('DATABASE_URL'),
+        conn_max_age=600,
+        conn_health_checks=True,
+    )
 
-    # dj_database_url.parse() を使ってURLを辞書にパースするだけにする
-    db_info = dj_database_url.parse(DATABASE_URL)
+    # Now, add the Django-specific OPTIONS dictionary to this configuration.
+    db_config['OPTIONS'] = {
+        'DISABLE_SERVER_SIDE_CURSORS': True,
+    }
 
+    # Finally, assign the complete, modified configuration to the DATABASES setting.
     DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': db_info['NAME'],
-            'USER': db_info['USER'],
-            'PASSWORD': db_info['PASSWORD'],
-            'HOST': db_info['HOST'],
-            'PORT': db_info['PORT'],
-            # Djangoが解釈するOPTIONSを、この階層で明確に設定する
-            'OPTIONS': {
-                'DISABLE_SERVER_SIDE_CURSORS': True,
-            }
-        }
+        'default': db_config
     }
 
     
