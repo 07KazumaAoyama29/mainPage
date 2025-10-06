@@ -18,6 +18,7 @@
 
 </head>
 <body>
+  {% bootstrap_messages %}
   <nav class="navbar navbar-expand-md navbar-light bg-light mb-4 border">
   <div class="container-fluid">
     <a class="navbar-brand" href="{% url 'learning_logs:knowledge_list' %}">
@@ -79,6 +80,8 @@
       {% block content %}{% endblock content %}
     </div>
   </main>
+
+  
 
 </body>
 </html>

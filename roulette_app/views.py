@@ -13,14 +13,16 @@ def select_members_view(request: HttpRequest):
 
 
 def result_view(request: HttpRequest):
-    """チーム分けを実行し、結果を表示するビュー (修正版)"""
+    """チーム分けを実行し、結果を表示するビュー (グループ数修正版)"""
     if request.method != 'POST':
         return redirect('roulette_app:index')
 
     participant_ids = request.POST.getlist('participants')
     presenter_ids = request.POST.getlist('presenters')
 
-    if not participant_ids:
+    # 発表者が選択されていない場合はエラーメッセージを表示して戻る
+    if not presenter_ids:
+        messages.error(request, '発表者を1人以上選択してください。')
         return redirect('roulette_app:index')
 
     participants = LabMember.objects.filter(id__in=participant_ids)
@@ -29,77 +31,53 @@ def result_view(request: HttpRequest):
 
     # --- チーム分けアルゴリズム ---
     num_participants = len(participants)
+    num_presenters = len(presenters)
+
+    # ▼▼▼▼▼ ここからが修正箇所です ▼▼▼▼▼
+
+    # 1. グループ数を発表者の数に設定
+    num_groups = num_presenters
     
-    # 参加者が少ない場合は、全員を1つのグループに入れる
-    if num_participants < 3:
-        context = {'groups': [list(participants)]}
-        return render(request, 'roulette_app/result.html', context)
+    # 以前のグループ数計算ロジックは削除
 
-    # 1. グループ数と各グループの人数を計算
-    base_size = 3
-    num_groups = num_participants // base_size
-    remainder = num_participants % base_size
-
-    # 4人グループが多くなりすぎないように調整
-    if num_groups > 0 and remainder > num_groups / 2:
-        num_groups = num_participants // 4
-        remainder = num_participants % 4
-        if num_groups == 0: # 4人未満の場合
-             num_groups = 1
-             base_size = num_participants
-             remainder = 0
-        else:
-             base_size = 4
+    # ▲▲▲▲▲ ここまでが修正箇所です ▲▲▲▲▲
     
-    group_sizes = [base_size + 1] * remainder + [base_size] * (num_groups - remainder)
-
     # 2. メンバーをシャッフル
     presenters_list = list(presenters)
-    others_list = list(others)
     random.shuffle(presenters_list)
+    others_list = list(others)
     random.shuffle(others_list)
 
     # 3. グループを初期化
     groups = [[] for _ in range(num_groups)]
     
-    # 参加者がグループ数より少ない場合のエッジケース対応
     if not groups:
-        context = {'groups': [list(participants)]}
-        return render(request, 'roulette_app/result.html', context)
+        messages.error(request, 'エラーが発生しました。もう一度お試しください。')
+        return redirect('roulette_app:index')
 
-    # 4. 【優先ルール】各グループに発表者を1人ずつ配置
+    # 4. 各グループに発表者を1人ずつ配置
     for i, presenter in enumerate(presenters_list):
-        group_index = i % num_groups
-        groups[group_index].append(presenter)
+        groups[i].append(presenter)
 
-    # 5. 残りのメンバーを配置
-    all_remaining = others_list + presenters_list[num_groups:]
+    # 5. 残りのメンバー（発表者以外）を配置
+    all_remaining = others_list
     random.shuffle(all_remaining)
     
-    # ▼▼▼▼▼ ここからが修正箇所です ▼▼▼▼▼
-    
-    # 分野ごとのカウンタを各グループに持たせる
     group_counts = [{'COMM': 0, 'GRAPH': 0} for _ in range(num_groups)]
     for i, group in enumerate(groups):
         for member in group:
             group_counts[i][member.research_group] += 1
             
-    # 残りのメンバーを配置していく
     for member in all_remaining:
-        # 追加先のグループを決めるため、グループのインデックスをソートする
-        # 条件：1. 現在の人数が少ない順, 2. 分野の偏りが大きい順
         group_indices = list(range(num_groups))
         group_indices.sort(key=lambda i: (
             len(groups[i]), 
             -abs(group_counts[i]['COMM'] - group_counts[i]['GRAPH'])
         ))
         
-        # 最も優先度の高いグループに追加
         target_group_index = group_indices[0]
         groups[target_group_index].append(member)
         group_counts[target_group_index][member.research_group] += 1
-
-    # ▲▲▲▲▲ ここまでが修正箇所です ▲▲▲▲▲
 
     final_groups = groups
 

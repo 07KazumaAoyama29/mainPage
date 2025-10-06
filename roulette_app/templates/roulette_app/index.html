@@ -24,12 +24,14 @@
         <td>{{ member.get_research_group_display }}</td>
         <td>
           <div class="form-check">
-            <input class="form-check-input participant-check" type="checkbox" name="participants" value="{{ member.id }}" id="participant_{{ member.id }}">
+            {# 変更点1: `checked` を追加 #}
+            <input class="form-check-input participant-check" type="checkbox" name="participants" value="{{ member.id }}" id="participant_{{ member.id }}" checked>
           </div>
         </td>
         <td>
           <div class="form-check">
-            <input class="form-check-input presenter-check" type="checkbox" name="presenters" value="{{ member.id }}" id="presenter_{{ member.id }}" disabled>
+            {# 変更点2: `disabled` を削除 #}
+            <input class="form-check-input presenter-check" type="checkbox" name="presenters" value="{{ member.id }}" id="presenter_{{ member.id }}">
           </div>
         </td>
       </tr>
@@ -42,6 +44,7 @@
   </div>
 </form>
 
+{# JavaScript部分は変更不要です #}
 <script>
   // 参加チェックボックスが変更されたら、対応する発表者チェックボックスのdisabled状態を切り替える
   document.querySelectorAll('.participant-check').forEach(item => {
