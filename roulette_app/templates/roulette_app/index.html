@@ -1,0 +1,57 @@
+{% extends "learning_logs/base.html" %}
+{% load django_bootstrap5 %}
+
+{% block header %}
+  <h2>輪講チーム分けルーレット</h2>
+{% endblock header %}
+
+{% block content %}
+<form action="{% url 'roulette_app:result' %}" method="post">
+  {% csrf_token %}
+  <table class="table table-bordered">
+    <thead class="table-light">
+      <tr>
+        <th>メンバー名</th>
+        <th>所属</th>
+        <th>参加</th>
+        <th>発表者</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for member in members %}
+      <tr>
+        <td>{{ member.name }}</td>
+        <td>{{ member.get_research_group_display }}</td>
+        <td>
+          <div class="form-check">
+            <input class="form-check-input participant-check" type="checkbox" name="participants" value="{{ member.id }}" id="participant_{{ member.id }}">
+          </div>
+        </td>
+        <td>
+          <div class="form-check">
+            <input class="form-check-input presenter-check" type="checkbox" name="presenters" value="{{ member.id }}" id="presenter_{{ member.id }}" disabled>
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <div class="d-grid">
+    <button type="submit" class="btn btn-primary btn-lg">チーム分け実行！</button>
+  </div>
+</form>
+
+<script>
+  // 参加チェックボックスが変更されたら、対応する発表者チェックボックスのdisabled状態を切り替える
+  document.querySelectorAll('.participant-check').forEach(item => {
+    item.addEventListener('change', event => {
+      const presenterCheckbox = document.getElementById('presenter_' + item.value);
+      presenterCheckbox.disabled = !item.checked;
+      if (!item.checked) {
+        presenterCheckbox.checked = false;
+      }
+    });
+  });
+</script>
+{% endblock content %}

@@ -26,4 +26,6 @@ urlpatterns = [
     path('notes/', include('learning_logs.urls')),
     # ユーザー認証 
     path('accounts/', include('accounts.urls')),
+    #ルーレット
+    path('roulette/', include('roulette_app.urls')),
 ]

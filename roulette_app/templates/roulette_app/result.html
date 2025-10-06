@@ -1,0 +1,31 @@
+{% extends "learning_logs/base.html" %}
+{% load django_bootstrap5 %}
+
+{% block header %}
+  <h2>チーム分け結果</h2>
+{% endblock header %}
+
+{% block content %}
+<div class="row">
+  {% for group in groups %}
+    <div class="col-md-4 mb-4">
+      <div class="card">
+        <div class="card-header">
+          <h4>グループ {{ forloop.counter }}</h4>
+        </div>
+        <ul class="list-group list-group-flush">
+          {% for member in group %}
+            <li class="list-group-item">
+              {{ member.name }} ({{ member.get_research_group_display }})
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  {% endfor %}
+</div>
+
+<div class="mt-4">
+  <a href="{% url 'roulette_app:index' %}" class="btn btn-secondary">もう一度やり直す</a>
+</div>
+{% endblock content %}
