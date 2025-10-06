@@ -74,3 +74,5 @@ docs/_build/
 # Virtual Environment
 venv/
 .env
+
+tree.txt
