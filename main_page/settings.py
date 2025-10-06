@@ -62,6 +62,8 @@ INSTALLED_APPS = [
     'learning_logs.apps.LearningLogsConfig',
     #ユーザー認証
     'accounts.apps.AccountsConfig',
+    #ルーレットアプリ
+    'roulette_app',
 ]
 
 MIDDLEWARE = [
