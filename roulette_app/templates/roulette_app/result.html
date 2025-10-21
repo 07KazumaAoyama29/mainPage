@@ -15,8 +15,8 @@
         </div>
         <ul class="list-group list-group-flush">
           {% for member in group %}
-            <li class="list-group-item">
-              {{ member.name }} ({{ member.get_research_group_display }})
+            <li class="list-group-item year-{{ member.academic_year|lower }}">
+              {{ member.name }} ({{ member.get_research_group_display }} - {{ member.get_academic_year_display }})
             </li>
           {% endfor %}
         </ul>
@@ -28,4 +28,16 @@
 <div class="mt-4">
   <a href="{% url 'roulette_app:index' %}" class="btn btn-secondary">もう一度やり直す</a>
 </div>
+
+<style>
+/* 学年ごとの背景色を指定 */
+.year-b4 { background-color: #e7f3ff; } /* 水色系 */
+.year-m1 { background-color: #fffae6; } /* 黄色系 */
+.year-m2 { background-color: #e6ffed; } /* 緑色系 */
+.year-d { background-color: #f3e6ff; } /* 紫色系 */
+.year-pd { background-color: #ffe6f0; } /* ピンク系 */
+.year-staff { background-color: #f2f2f2; font-weight: bold;} /* グレー系・太字 */
+
+/* 必要に応じて他の学年のスタイルも追加 */
+</style>
 {% endblock content %}

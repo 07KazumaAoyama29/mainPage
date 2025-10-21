@@ -7,7 +7,7 @@ from .models import LabMember
 def select_members_view(request: HttpRequest):
     """参加者と発表者を選択するページを表示するビュー"""
     # 在籍中のメンバーのみを取得
-    members = LabMember.objects.filter(is_active=True).order_by('name')
+    members = LabMember.objects.filter(is_active=True).order_by('academic_year', 'name')
     context = {'members': members}
     return render(request, 'roulette_app/index.html', context)
 
