@@ -1,0 +1,71 @@
+{% extends "todo/base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <a href="?year={{ prev_year }}&month={{ prev_month }}" class="btn btn-outline-secondary">
+            &laquo; 前月
+        </a>
+        
+        <h2 class="fw-bold mb-0">
+            {{ year }}年 {{ month }}月
+            <span class="fs-5 text-muted ms-2">合計: {{ total_pages }} p</span>
+        </h2>
+        
+        <a href="?year={{ next_year }}&month={{ next_month }}" class="btn btn-outline-secondary">
+            次月 &raquo;
+        </a>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            <table class="table table-bordered mb-0 text-center" style="table-layout: fixed;">
+                <thead class="bg-light">
+                    <tr>
+                        <th class="text-danger">月</th>
+                        <th>火</th>
+                        <th>水</th>
+                        <th>木</th>
+                        <th>金</th>
+                        <th class="text-primary">土</th>
+                        <th class="text-danger">日</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for week in calendar %}
+                    <tr style="height: 100px;"> {% for day_data in week %}
+                            {% if day_data is None %}
+                                <td class="bg-light"></td> {% else %}
+                                <td class="position-relative p-0 align-middle">
+                                    <div style="
+                                        background-color: rgba(40, 167, 69, {{ day_data.opacity }});
+                                        width: 100%; height: 100%;
+                                        display: flex; flex-direction: column;
+                                        justify-content: center; align-items: center;
+                                    ">
+                                        <div class="fw-bold fs-5" style="color: {% if day_data.opacity > 0.6 %}white{% else %}black{% endif %};">
+                                            {{ day_data.day }}
+                                        </div>
+                                        
+                                        {% if day_data.pages > 0 %}
+                                            <div class="small fw-bold mt-1" style="color: {% if day_data.opacity > 0.6 %}white{% else %}#333{% endif %};">
+                                                {{ day_data.pages }} p
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            {% endif %}
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="mt-4 d-flex gap-2">
+        <a href="{% url 'todo:calendar' %}" class="btn btn-secondary">カレンダーに戻る</a>
+        <a href="{% url 'todo:weekly_summary' %}" class="btn btn-info text-white">週間サマリーへ</a>
+    </div>
+</div>
+{% endblock %}

@@ -3,12 +3,16 @@ from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse, HttpResponse
 from django.urls import reverse_lazy, reverse
 from django.views.decorators.http import require_POST
-from datetime import datetime, timedelta
+from django.db.models import Sum
+from django.utils import timezone
+
+from datetime import datetime, timedelta, date
 
 from .models import Schedule, Task, ActionItem, ActionCategory
 from .forms import ScheduleForm, TaskForm, ActionItemForm, ActionCategoryForm
 
 import json
+import calendar
 
 @login_required
 def calendar_view(request):
@@ -33,21 +37,29 @@ def calendar_events(request):
 
         # タイトルと色を新しいカテゴリから取得
         # データ移行済みなので action_category は必ずあるはずですが、念のため安全策をとります
+        title_text = "未分類"
+        bg_color = "#6c757d"
+        
         if schedule.action_category:
             title_text = schedule.action_category.name
             bg_color = schedule.action_category.color
-        else:
-            title_text = "未分類"
-            bg_color = "#6c757d"
+        
+        # ★追加: 具体的なアイテムが設定されていれば、タイトルに追加する
+        if schedule.action_item:
+            title_text += f": {schedule.action_item.title}"
+
+        # ページ数があればそれも表示しちゃう？（お好みで）
+        if schedule.page_count:
+            title_text += f" ({schedule.page_count}p)"
 
         events.append({
             'id': schedule.pk,
-            'title': f"{title_text} ({progress_percentage}%)", 
+            'title': title_text, # 進捗率(%)を表示したい場合はここに f"{title_text} ({progress_percentage}%)"
             'start': schedule.start_time.isoformat(),
             'end': schedule.end_time.isoformat(),
             'url': reverse_lazy('todo:schedule_detail', kwargs={'pk': schedule.pk}),
             'backgroundColor': bg_color,
-            'borderColor': bg_color, # 枠線も同じ色にすると綺麗です
+            'borderColor': bg_color,
         })
     return JsonResponse(events, safe=False)
 
@@ -73,8 +85,26 @@ def schedule_create_form(request): # 引数から *args, **kwargs を削除
 
     # フォームを初期化
     form = ScheduleForm(initial=initial_data, user=request.user)
+
+    categories = ActionCategory.objects.filter(owner=request.user)
+    track_pages_map = {cat.id: cat.track_pages for cat in categories}
     
-    context = {'form': form}
+    items_by_category = {}
+    action_items = ActionItem.objects.filter(owner=request.user).select_related('category')
+    
+    for item in action_items:
+        # カテゴリが設定されている場合のみ
+        if item.category:
+            cat_id = item.category.id
+            if cat_id not in items_by_category:
+                items_by_category[cat_id] = []
+            items_by_category[cat_id].append({'id': item.id, 'title': item.title})
+
+    context = {
+        'form': form,
+        'track_pages_map': json.dumps(track_pages_map),
+        'items_by_category': json.dumps(items_by_category), # ★JSONで渡す
+    }
     return render(request, 'todo/partials/schedule_create_form.html', context)
 
 @login_required
@@ -115,7 +145,24 @@ def schedule_edit_form(request, pk):
     schedule = get_object_or_404(Schedule, pk=pk, owner=request.user)
     form = ScheduleForm(instance=schedule, user=request.user)
 
-    context = {'form': form, 'schedule': schedule}
+    categories = ActionCategory.objects.filter(owner=request.user)
+    track_pages_map = {cat.id: cat.track_pages for cat in categories}
+
+    items_by_category = {}
+    action_items = ActionItem.objects.filter(owner=request.user).select_related('category')
+    for item in action_items:
+        if item.category:
+            cat_id = item.category.id
+            if cat_id not in items_by_category:
+                items_by_category[cat_id] = []
+            items_by_category[cat_id].append({'id': item.id, 'title': item.title})
+
+    context = {
+        'form': form, 
+        'schedule': schedule,
+        'track_pages_map': json.dumps(track_pages_map),
+        'items_by_category': json.dumps(items_by_category), # ★追加
+    }
     return render(request, 'todo/partials/schedule_edit_form.html', context)
 
 @login_required
@@ -424,3 +471,175 @@ def category_delete(request, pk):
     response = HttpResponse(status=204)
     response['HX-Refresh'] = 'true'
     return response
+
+@login_required
+def weekly_summary(request):
+    # 1. 表示する基準日を決める
+    date_str = request.GET.get('date')
+    if date_str:
+        try:
+            # URLから渡された日付をパース
+            target_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+        except ValueError:
+            target_date = date.today()
+    else:
+        # 指定がなければ今日
+        target_date = date.today()
+
+    # 2. その週の月曜日と日曜日を計算
+    # target_date.weekday() : 月=0, ..., 日=6
+    start_of_week = target_date - timedelta(days=target_date.weekday())
+    end_of_week = start_of_week + timedelta(days=6)
+    
+    # 3. 前週と翌週の月曜日を計算（ボタン用）
+    prev_week_start = start_of_week - timedelta(days=7)
+    next_week_start = start_of_week + timedelta(days=7)
+
+    # --- 以下、集計ロジック（既存のままですが、変数は start_of_week を使います） ---
+    
+    # タイムゾーン考慮してdatetimeにする
+    start_datetime = timezone.make_aware(datetime.combine(start_of_week, datetime.min.time()))
+    end_datetime = timezone.make_aware(datetime.combine(end_of_week, datetime.max.time()))
+
+    records = Schedule.objects.filter(
+        owner=request.user,
+        action_category__track_pages=True,
+        page_count__isnull=False,
+        start_time__range=(start_datetime, end_datetime)
+    ).select_related('action_category').order_by('start_time')
+
+    total_pages = records.aggregate(Sum('page_count'))['page_count__sum'] or 0
+
+    # グラフ用データ作成（日別）
+    daily_stats = {}
+    for i in range(7):
+        date_obj = start_of_week + timedelta(days=i)
+        daily_stats[date_obj] = 0
+
+    for record in records:
+        local_date = timezone.localtime(record.start_time).date()
+        if local_date in daily_stats:
+            daily_stats[local_date] += record.page_count
+
+    daily_labels = [d.strftime('%m/%d') for d in daily_stats.keys()]
+    daily_data = list(daily_stats.values())
+
+    # カテゴリ別集計
+    category_summary = {}
+    for record in records:
+        cat_name = record.action_category.name
+        category_summary[cat_name] = category_summary.get(cat_name, 0) + record.page_count
+    
+    pie_labels = list(category_summary.keys())
+    pie_data = list(category_summary.values())
+
+    context = {
+        'start_date': start_of_week,
+        'end_date': end_of_week,
+        'records': records,
+        'total_pages': total_pages,
+        'category_summary': category_summary,
+        'daily_labels': json.dumps(daily_labels),
+        'daily_data': json.dumps(daily_data),
+        'pie_labels': json.dumps(pie_labels),
+        'pie_data': json.dumps(pie_data),
+        # ★追加：ボタン用の日付文字列
+        'prev_week_date': prev_week_start.strftime('%Y-%m-%d'),
+        'next_week_date': next_week_start.strftime('%Y-%m-%d'),
+        'is_this_week': start_of_week == (date.today() - timedelta(days=date.today().weekday())),
+    }
+    return render(request, 'todo/weekly_summary.html', context)
+
+@login_required
+def monthly_summary(request):
+    """月間ヒートマップを表示するビュー"""
+    
+    # 1. 表示する年月を取得（指定がなければ今月）
+    year = request.GET.get('year')
+    month = request.GET.get('month')
+    
+    today = date.today()
+    if year and month:
+        try:
+            current_year = int(year)
+            current_month = int(month)
+        except ValueError:
+            current_year = today.year
+            current_month = today.month
+    else:
+        current_year = today.year
+        current_month = today.month
+
+    # 2. その月のデータを取得
+    # 月の初日と最終日を計算
+    _, last_day = calendar.monthrange(current_year, current_month)
+    start_date = datetime(current_year, current_month, 1)
+    end_date = datetime(current_year, current_month, last_day, 23, 59, 59)
+    
+    # タイムゾーン対応
+    start_datetime = timezone.make_aware(start_date)
+    end_datetime = timezone.make_aware(end_date)
+
+    # ページ数記録ONのデータを取得
+    records = Schedule.objects.filter(
+        owner=request.user,
+        action_category__track_pages=True,
+        page_count__isnull=False,
+        start_time__range=(start_datetime, end_datetime)
+    )
+
+    # 日ごとの合計を計算 {day(int): pages(int)}
+    daily_pages = {}
+    max_pages = 0 # ヒートマップの基準（その月で一番読んだ日のページ数）
+    
+    for record in records:
+        day = record.start_time.day
+        daily_pages[day] = daily_pages.get(day, 0) + record.page_count
+        if daily_pages[day] > max_pages:
+            max_pages = daily_pages[day]
+
+    # 3. カレンダー作成
+    cal = calendar.Calendar(firstweekday=0) # 0=月曜始まり
+    month_calendar = []
+    
+    for week in cal.monthdayscalendar(current_year, current_month):
+        week_data = []
+        for day in week:
+            if day == 0:
+                # 0は前の月/次の月の日付（空白にする）
+                week_data.append(None)
+            else:
+                pages = daily_pages.get(day, 0)
+                # 色の濃さを計算 (0.0 〜 1.0)
+                # pagesが0なら0、それ以外は max_pages に対する割合（最低0.1は確保）
+                opacity = 0
+                if max_pages > 0 and pages > 0:
+                    opacity = max(0.2, pages / max_pages) # 最低0.2の濃さは保証
+                
+                week_data.append({
+                    'day': day,
+                    'pages': pages,
+                    'opacity': opacity
+                })
+        month_calendar.append(week_data)
+
+    # 4. 前月・次月のリンク用計算
+    if current_month == 1:
+        prev_year, prev_month = current_year - 1, 12
+    else:
+        prev_year, prev_month = current_year, current_month - 1
+        
+    if current_month == 12:
+        next_year, next_month = current_year + 1, 1
+    else:
+        next_year, next_month = current_year, current_month + 1
+
+    context = {
+        'year': current_year,
+        'month': current_month,
+        'calendar': month_calendar,
+        'prev_year': prev_year, 'prev_month': prev_month,
+        'next_year': next_year, 'next_month': next_month,
+        'total_pages': sum(daily_pages.values())
+    }
+    return render(request, 'todo/monthly_summary.html', context)

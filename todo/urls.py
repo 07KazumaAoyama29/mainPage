@@ -41,4 +41,8 @@ urlpatterns = [
     path("categories/edit-form/<int:pk>/", views.category_edit_form, name="category_edit_form"),
     path("categories/update/<int:pk>/", views.category_update, name="category_update"),
     path("categories/delete/<int:pk>/", views.category_delete, name="category_delete"),
+
+    #統計用
+    path("summary/", views.weekly_summary, name="weekly_summary"),
+    path("summary/monthly/", views.monthly_summary, name="monthly_summary"),
 ]

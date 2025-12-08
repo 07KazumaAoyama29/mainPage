@@ -4,11 +4,13 @@ from .models import Schedule, Task, ActionItem, ActionCategory
 class ActionCategoryForm(forms.ModelForm):
     class Meta:
         model = ActionCategory
-        fields = ['name', 'color']
+        # track_pages を追加
+        fields = ['name', 'color', 'track_pages'] 
         widgets = {
-            'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'カテゴリ名（例: 研究）'}),
-            # type='color' にするとブラウザのカラーピッカーが使えます
-            'color': forms.TextInput(attrs={'type': 'color', 'class': 'form-control form-control-color', 'title': '色を選択'}),
+            'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'カテゴリ名（例: 読書）'}),
+            'color': forms.TextInput(attrs={'type': 'color', 'class': 'form-control form-control-color'}),
+            # チェックボックスのデザイン調整
+            'track_pages': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
 
 class ActionItemForm(forms.ModelForm):
@@ -39,21 +41,26 @@ class ActionItemForm(forms.ModelForm):
 class ScheduleForm(forms.ModelForm):
     class Meta:
         model = Schedule
-        # action_item を削除し、action_category を追加
-        fields = ['action_category', 'start_time', 'end_time']
+        # action_item をフィールドに追加
+        fields = ['action_category', 'action_item', 'start_time', 'end_time', 'page_count']
         widgets = {
             'start_time': forms.DateTimeInput(attrs={'type': 'datetime-local', 'class': 'form-control'}),
             'end_time': forms.DateTimeInput(attrs={'type': 'datetime-local', 'class': 'form-control'}),
-            'action_category': forms.Select(attrs={'class': 'form-select'}),
+            'action_category': forms.Select(attrs={'class': 'form-select', 'id': 'id_action_category'}),
+            'page_count': forms.NumberInput(attrs={'class': 'form-control', 'id': 'id_page_count', 'placeholder': '読んだページ数'}),
+            # ★追加: 具体的な内容（本など）を選ぶプルダウン
+            'action_item': forms.Select(attrs={'class': 'form-select', 'id': 'id_action_item'}),
         }
 
     def __init__(self, *args, **kwargs):
         self.user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
         if self.user:
-            # ログインユーザーのカテゴリだけを表示する
             self.fields['action_category'].queryset = ActionCategory.objects.filter(owner=self.user)
-            self.fields['action_category'].empty_label = "カテゴリを選択してください"
+            # ActionItemもユーザーのもので絞り込む（必須ではないのでrequired=False）
+            self.fields['action_item'].queryset = ActionItem.objects.filter(owner=self.user)
+            self.fields['action_item'].required = False
+            self.fields['action_item'].empty_label = "（指定なし）"
 
 # TaskForm は変更なし
 class TaskForm(forms.ModelForm):

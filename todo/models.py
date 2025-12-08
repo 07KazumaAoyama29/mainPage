@@ -3,8 +3,10 @@ from django.utils import timezone
 from django.contrib.auth.models import User
 
 class ActionCategory(models.Model):
-    name = models.CharField("カテゴリ名", max_length=50) # 例: 研究, バイト
-    color = models.CharField("色コード", max_length=20, default='#6c757d') # カレンダー表示用
+    name = models.CharField("カテゴリ名", max_length=50)
+    color = models.CharField("色コード", max_length=20, default='#6c757d')
+    # ★追加: ページ数を記録するかどうかのフラグ
+    track_pages = models.BooleanField("ページ数を記録する", default=False) 
     owner = models.ForeignKey(User, on_delete=models.CASCADE)
 
     def __str__(self):
@@ -55,6 +57,9 @@ class Schedule(models.Model):
 
     # ↓ Scheduleモデル自体が持っていた詳細情報はActionItemに移動したので削除
     # task_type, description, text1, text2, text3, text4, int1 を削除
+
+
+    page_count = models.IntegerField("ページ数", null=True, blank=True)
 
     start_time = models.DateTimeField("開始時刻")
     end_time = models.DateTimeField("終了時刻")

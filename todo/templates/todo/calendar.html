@@ -11,6 +11,8 @@
   </button>
   <a class="btn btn-secondary mb-3" href="{% url 'todo:action_item_list' %}">やることリスト</a>
   <a class="btn btn-secondary mb-3 ms-1" href="{% url 'todo:category_list' %}">カテゴリ管理</a>
+  <a class="btn btn-info mb-3 ms-1" href="{% url 'todo:weekly_summary' %}">週間サマリー</a>
+  <a class="btn btn-success mb-3 ms-1" href="{% url 'todo:monthly_summary' %}">月間サマリー</a>
     {% endif %}
 {% endblock header %}
 

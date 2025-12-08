@@ -1,14 +1,61 @@
-<form hx-post="{% url 'todo:update' pk=schedule.pk %}">
+<form id="edit-task-form" hx-post="{% url 'todo:update' pk=schedule.pk %}">
   {% csrf_token %}
   <div class="modal-header">
     <h5 class="modal-title">スケジュールの編集</h5>
     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
   </div>
   <div class="modal-body">
-    {{ form.as_p }}
+
+    <div class="mb-3">
+        <label for="{{ form.action_category.id_for_label }}" class="form-label">アクション区分</label>
+        {{ form.action_category }}
+    </div>
+
+    <div class="mb-3">
+        <label for="{{ form.action_item.id_for_label }}" class="form-label">内容（本など）</label>
+        {{ form.action_item }}
+        <div class="form-text small">カテゴリに対応するリストから選択できます</div>
+    </div>
+
+    <div class="mb-3" id="create-page-count-area" style="display: none;">
+        </div>
+    
+    <div class="mb-3">
+        <label for="{{ form.action_category.id_for_label }}" class="form-label">アクション区分</label>
+        {{ form.action_category }}
+        {% if form.action_category.errors %}
+            <div class="text-danger small">{{ form.action_category.errors }}</div>
+        {% endif %}
+    </div>
+
+    <div class="mb-3" id="edit-page-count-area" style="display: none;">
+        <label for="{{ form.page_count.id_for_label }}" class="form-label">読んだページ数</label>
+        <div class="input-group">
+            {{ form.page_count }}
+            <span class="input-group-text">ページ</span>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <label for="{{ form.start_time.id_for_label }}" class="form-label">開始</label>
+            {{ form.start_time }}
+            {% if form.start_time.errors %}
+                <div class="text-danger small">{{ form.start_time.errors }}</div>
+            {% endif %}
+        </div>
+        <div class="col-md-6 mb-3">
+            <label for="{{ form.end_time.id_for_label }}" class="form-label">終了</label>
+            {{ form.end_time }}
+            {% if form.end_time.errors %}
+                <div class="text-danger small">{{ form.end_time.errors }}</div>
+            {% endif %}
+        </div>
+    </div>
+
   </div>
   <div class="modal-footer justify-content-between">
-    {# --- 削除ボタンを追加 --- #}
+    {# 削除ボタン #}
     <button type="button" class="btn btn-danger" 
             hx-post="{% url 'todo:delete' pk=schedule.pk %}"
             hx-confirm="このスケジュールを本当に削除しますか？"
@@ -17,7 +64,68 @@
     </button>
     <div>
       <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">閉じる</button>
-      <button type="submit" class="btn btn-primary">保存</button>
+      <button type="submit" id="submit-edit-form" class="btn btn-primary">保存</button>
     </div>
   </div>
 </form>
+
+<script>
+    (function() {
+        const trackPagesMap = {{ track_pages_map|safe }};
+        const itemsByCategory = {{ items_by_category|safe }}; // ★受け取る
+        
+        const categorySelect = document.getElementById('id_action_category');
+        const itemSelect = document.getElementById('id_action_item'); // ★取得
+        const pageCountArea = document.getElementById('create-page-count-area');
+
+        // カテゴリに応じてアイテムリストを更新する関数
+        function updateItemOptions() {
+            const selectedId = categorySelect.value;
+            const currentItemId = itemSelect.value; // 今選ばれている値を保存
+
+            // 選択肢をクリア（"指定なし" だけ残す）
+            itemSelect.innerHTML = '<option value="">（指定なし）</option>';
+
+            if (selectedId && itemsByCategory[selectedId]) {
+                const items = itemsByCategory[selectedId];
+                items.forEach(function(item) {
+                    const option = document.createElement('option');
+                    option.value = item.id;
+                    option.textContent = item.title;
+                    itemSelect.appendChild(option);
+                });
+            }
+            
+            // もし元の選択値が新しいリスト内にあれば、それを再選択
+            // (編集画面で開いたときに値を保持するため)
+            // ただし、valueが一致するか確認が必要
+            // 簡易的に、値があればセットしてみる
+            if (currentItemId) {
+                itemSelect.value = currentItemId;
+            }
+        }
+
+        function togglePageCount() {
+            // ... (既存の処理) ...
+        }
+
+        if (categorySelect) {
+            // カテゴリ変更時に、アイテムリスト更新 → ページ数表示判定
+            categorySelect.addEventListener('change', function() {
+                updateItemOptions();
+                togglePageCount();
+            });
+            
+            // ★編集画面などで初期値がある場合、
+            // サーバー側でレンダリングされた初期状態の<option>を一度クリアして、
+            // JSで作り直す必要がある（整合性をとるため）
+            // ただし、一番最初はサーバーが正しいリストを返しているはずなので、
+            // changeイベント発火時のみ更新でも良いが、念のため初期化実行
+            // updateItemOptions(); // ← これをやると初期値が消える恐れがあるので注意
+            // 今回は、初期表示はサーバーレンダリング（forms.pyのqueryset）に任せ、
+            // 「変更したとき」だけJSで書き換えるのが安全です。
+            
+            togglePageCount();
+        }
+    })();
+</script>

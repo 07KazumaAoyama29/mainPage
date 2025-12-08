@@ -24,6 +24,14 @@
                     <span class="ms-2 text-muted small">カレンダーでの表示色</span>
                 </div>
             </div>
+
+            <div class="mb-3 form-check">
+                {{ form.track_pages }}
+                <label class="form-check-label" for="{{ form.track_pages.id_for_label }}">
+                    ページ数を記録する
+                </label>
+                <div class="form-text small">読書など、進捗をページ数で管理したい場合にチェックしてください。</div>
+            </div>
         </div>
         <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">キャンセル</button>

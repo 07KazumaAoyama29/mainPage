@@ -1,0 +1,166 @@
+{% extends "todo/base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <a class="btn btn-success mb-3 ms-1" href="{% url 'todo:monthly_summary' %}">月間サマリー</a>
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>週間活動サマリー</h2>
+    
+    <div class="d-flex align-items-center">
+        <a href="?date={{ prev_week_date }}" class="btn btn-outline-secondary btn-sm me-2">
+            &laquo; 前週
+        </a>
+        
+        <span class="fw-bold mx-2">
+            {{ start_date|date:"Y/m/d" }} 〜 {{ end_date|date:"m/d" }}
+        </span>
+
+        {% if is_this_week %}
+            <button class="btn btn-outline-secondary btn-sm ms-2" disabled>
+                次週 &raquo;
+            </button>
+        {% else %}
+            <a href="?date={{ next_week_date }}" class="btn btn-outline-secondary btn-sm ms-2">
+                次週 &raquo;
+            </a>
+        {% endif %}
+    </div>
+</div>
+
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card bg-primary text-white text-center p-3">
+                <h4>今週の読書ページ数</h4>
+                <div class="display-3 fw-bold">{{ total_pages }} <span class="fs-4">p</span></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="card h-100">
+                <div class="card-header bg-white fw-bold">日別の推移</div>
+                <div class="card-body">
+                    <canvas id="dailyChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div class="card-header bg-white fw-bold">カテゴリ内訳</div>
+                <div class="card-body">
+                    <canvas id="pieChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <h4 class="mb-3">日々の記録リスト</h4>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead class="table-light">
+    <tr>
+        <th>日付</th>
+        <th>カテゴリ</th>
+        <th>内容</th> <th>時間</th>
+        <th class="text-end">ページ数</th>
+    </tr>
+</thead>
+<tbody>
+    {% for record in records %}
+    <tr>
+        <td>{{ record.start_time|date:"m/d (D)" }}</td>
+        <td>
+            <span class="badge" style="background-color: {{ record.action_category.color }};">
+                {{ record.action_category.name }}
+            </span>
+        </td>
+        <td>
+            {% if record.action_item %}
+                {{ record.action_item.title }}
+            {% else %}
+                <span class="text-muted small">-</span>
+            {% endif %}
+        </td>
+        <td>{{ record.start_time|date:"H:i" }} - {{ record.end_time|date:"H:i" }}</td>
+        <td class="text-end fw-bold">{{ record.page_count }} p</td>
+    </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4" class="text-center py-4 text-muted">記録なし</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    <div class="mt-4 mb-5">
+        <a href="{% url 'todo:calendar' %}" class="btn btn-secondary">カレンダーに戻る</a>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // --- 1. 日別棒グラフ ---
+        const dailyCtx = document.getElementById('dailyChart').getContext('2d');
+        new Chart(dailyCtx, {
+            type: 'bar',
+            data: {
+                labels: {{ daily_labels|safe }}, // Djangoから渡された日付リスト
+                datasets: [{
+                    label: 'ページ数',
+                    data: {{ daily_data|safe }}, // Djangoから渡された数値リスト
+                    backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false, // 高さをCSSで調整しやすくする
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { stepSize: 10 } // 目盛りを整数にする
+                    }
+                }
+            }
+        });
+
+        // --- 2. カテゴリ別ドーナツグラフ ---
+        const pieCtx = document.getElementById('pieChart').getContext('2d');
+        // データがある場合のみ描画（データ0だとエラーになることがあるため）
+        const pieData = {{ pie_data|safe }};
+        
+        if (pieData.length > 0) {
+            new Chart(pieCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: {{ pie_labels|safe }},
+                    datasets: [{
+                        data: pieData,
+                        backgroundColor: [
+                            '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    }
+                }
+            });
+        } else {
+            // データがない場合のメッセージ
+            document.getElementById('pieChart').style.display = 'none';
+            document.getElementById('pieChart').parentNode.innerHTML += '<p class="text-center text-muted my-5">データがありません</p>';
+        }
+    });
+</script>
+{% endblock %}
