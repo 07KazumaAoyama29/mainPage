@@ -5,8 +5,8 @@ from django.urls import reverse_lazy, reverse
 from django.views.decorators.http import require_POST
 from datetime import datetime, timedelta
 
-from .models import Schedule, Task, ActionItem
-from .forms import ScheduleForm, TaskForm, ActionItemForm
+from .models import Schedule, Task, ActionItem, ActionCategory
+from .forms import ScheduleForm, TaskForm, ActionItemForm, ActionCategoryForm
 
 import json
 
@@ -18,17 +18,10 @@ def calendar_view(request):
 @login_required
 def calendar_events(request):
     """カレンダーに表示するイベント（スケジュール）をJSON形式で返すビュー"""
-    # ↓ この行に .select_related('action_item') を追加するとパフォーマンスが向上します
-    COLOR_MAP = {
-        '読書': '#28a745',   # 青
-        '研究': '#dc3545',   # 赤
-        'バイト': '#ffc107',   # 黄
-        '娯楽': '#007bff',   # 緑
-        'ジム': '#fd7e14',   # オレンジ
-        'その他': '#6c757d',  # グレー
-    }
-    schedules = Schedule.objects.filter(owner=request.user).select_related('action_item')
+    # select_related を action_category に変更
+    schedules = Schedule.objects.filter(owner=request.user).select_related('action_category')
     events = []
+    
     for schedule in schedules:
         tasks = schedule.tasks.all()
         total_tasks = tasks.count()
@@ -38,13 +31,23 @@ def calendar_events(request):
         else:
             progress_percentage = 100
 
+        # タイトルと色を新しいカテゴリから取得
+        # データ移行済みなので action_category は必ずあるはずですが、念のため安全策をとります
+        if schedule.action_category:
+            title_text = schedule.action_category.name
+            bg_color = schedule.action_category.color
+        else:
+            title_text = "未分類"
+            bg_color = "#6c757d"
+
         events.append({
             'id': schedule.pk,
-            'title': f"{schedule.action_item.title} ({progress_percentage}%)", # schedule.title -> schedule.action_item.title
+            'title': f"{title_text} ({progress_percentage}%)", 
             'start': schedule.start_time.isoformat(),
             'end': schedule.end_time.isoformat(),
             'url': reverse_lazy('todo:schedule_detail', kwargs={'pk': schedule.pk}),
-            'backgroundColor': COLOR_MAP.get(schedule.action_item.action_type, '#6c757d')
+            'backgroundColor': bg_color,
+            'borderColor': bg_color, # 枠線も同じ色にすると綺麗です
         })
     return JsonResponse(events, safe=False)
 
@@ -70,9 +73,6 @@ def schedule_create_form(request): # 引数から *args, **kwargs を削除
 
     # フォームを初期化
     form = ScheduleForm(initial=initial_data, user=request.user)
-    
-    # 本番環境のデータベースエラーを回避するための重要な一行
-    form.fields['action_item'].choices = list(form.fields['action_item'].choices)
     
     context = {'form': form}
     return render(request, 'todo/partials/schedule_create_form.html', context)
@@ -114,10 +114,6 @@ def schedule_edit_form(request, pk):
     """モーダルに表示するための、データが入ったスケジュール編集フォームを返す"""
     schedule = get_object_or_404(Schedule, pk=pk, owner=request.user)
     form = ScheduleForm(instance=schedule, user=request.user)
-    
-    # --- ▼▼▼ この一行を追加 ▼▼▼ ---
-    # データベースエラーを回避するため、選択肢をここで一度に読み込む
-    form.fields['action_item'].choices = list(form.fields['action_item'].choices)
 
     context = {'form': form, 'schedule': schedule}
     return render(request, 'todo/partials/schedule_edit_form.html', context)
@@ -370,3 +366,61 @@ def task_delete(request, pk):
     task.delete()
     # 削除が成功したら、空のHTTPレスポンスを返す（HTMXがこの要素をDOMから削除する）
     return HttpResponse()
+
+@login_required
+def category_list(request):
+    """カテゴリの一覧ページ"""
+    categories = ActionCategory.objects.filter(owner=request.user).order_by('id')
+    context = {'categories': categories}
+    return render(request, 'todo/category_list.html', context)
+
+@login_required
+def category_create_form(request):
+    """作成フォーム（モーダル用）"""
+    form = ActionCategoryForm()
+    return render(request, 'todo/partials/category_form.html', {'form': form})
+
+@login_required
+@require_POST
+def category_create(request):
+    """カテゴリ作成処理"""
+    form = ActionCategoryForm(request.POST)
+    if form.is_valid():
+        category = form.save(commit=False)
+        category.owner = request.user
+        category.save()
+        # 成功したらリフレッシュ
+        response = HttpResponse(status=204)
+        response['HX-Refresh'] = 'true'
+        return response
+    return render(request, 'todo/partials/category_form.html', {'form': form})
+
+@login_required
+def category_edit_form(request, pk):
+    """編集フォーム（モーダル用）"""
+    category = get_object_or_404(ActionCategory, pk=pk, owner=request.user)
+    form = ActionCategoryForm(instance=category)
+    return render(request, 'todo/partials/category_form.html', {'form': form, 'category': category})
+
+@login_required
+@require_POST
+def category_update(request, pk):
+    """カテゴリ更新処理"""
+    category = get_object_or_404(ActionCategory, pk=pk, owner=request.user)
+    form = ActionCategoryForm(request.POST, instance=category)
+    if form.is_valid():
+        form.save()
+        response = HttpResponse(status=204)
+        response['HX-Refresh'] = 'true'
+        return response
+    return render(request, 'todo/partials/category_form.html', {'form': form, 'category': category})
+
+@login_required
+@require_POST
+def category_delete(request, pk):
+    """カテゴリ削除処理"""
+    category = get_object_or_404(ActionCategory, pk=pk, owner=request.user)
+    category.delete()
+    response = HttpResponse(status=204)
+    response['HX-Refresh'] = 'true'
+    return response

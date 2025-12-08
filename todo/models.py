@@ -2,12 +2,22 @@ from django.db import models
 from django.utils import timezone
 from django.contrib.auth.models import User
 
+class ActionCategory(models.Model):
+    name = models.CharField("カテゴリ名", max_length=50) # 例: 研究, バイト
+    color = models.CharField("色コード", max_length=20, default='#6c757d') # カレンダー表示用
+    owner = models.ForeignKey(User, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.name
+
 # --- 1. 新しい「やることリスト」のモデル ---
 class ActionItem(models.Model):
     ACTION_TYPE_CHOICES = [
         ('読書', '読書'), ('研究', '研究'), ('バイト', 'バイト'),
         ('娯楽', '娯楽'), ('ジム', 'ジム'), ('その他', 'その他'),
     ]
+
+    category = models.ForeignKey(ActionCategory, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="カテゴリ")
 
     title = models.CharField("タイトル", max_length=100)
     action_type = models.CharField("種類", max_length=10, choices=ACTION_TYPE_CHOICES)
@@ -25,12 +35,22 @@ class ActionItem(models.Model):
 
 # --- 2. 既存の「スケジュール」モデルの変更 ---
 class Schedule(models.Model):
+    action_category = models.ForeignKey(
+        ActionCategory, 
+        on_delete=models.SET_NULL, # カテゴリが消えてもスケジュールは残るように
+        null=True, 
+        blank=True,
+        verbose_name="アクション区分"
+    )
+
     # ↓ titleフィールドをForeignKeyに変更
     action_item = models.ForeignKey(
         ActionItem, 
         on_delete=models.CASCADE, 
         verbose_name="アクション",
-        related_name='schedules' # (推奨) 逆参照名を指定
+        related_name='schedules', # (推奨) 逆参照名を指定
+        null=True,
+        blank=True
     )
 
     # ↓ Scheduleモデル自体が持っていた詳細情報はActionItemに移動したので削除

@@ -1,5 +1,15 @@
 from django import forms
-from .models import Schedule, Task, ActionItem 
+from .models import Schedule, Task, ActionItem, ActionCategory
+
+class ActionCategoryForm(forms.ModelForm):
+    class Meta:
+        model = ActionCategory
+        fields = ['name', 'color']
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'カテゴリ名（例: 研究）'}),
+            # type='color' にするとブラウザのカラーピッカーが使えます
+            'color': forms.TextInput(attrs={'type': 'color', 'class': 'form-control form-control-color', 'title': '色を選択'}),
+        }
 
 class ActionItemForm(forms.ModelForm):
     class Meta:
@@ -27,33 +37,23 @@ class ActionItemForm(forms.ModelForm):
 
 
 class ScheduleForm(forms.ModelForm):
-    action_item = forms.ModelChoiceField(
-        queryset=ActionItem.objects.none(), # 初期状態は空にしておく
-        label="アクション",
-        empty_label="選択してください"
-    )
-
-    def __init__(self, *args, **kwargs):
-        user = kwargs.pop('user', None)
-        super().__init__(*args, **kwargs)
-        if user:
-            # 検証で使われるquerysetを正しく設定する
-            self.fields['action_item'].queryset = ActionItem.objects.filter(
-                owner=user, 
-                completed=False
-            )
-
     class Meta:
         model = Schedule
-        fields = [
-            'action_item',
-            'start_time',
-            'end_time',
-        ]
+        # action_item を削除し、action_category を追加
+        fields = ['action_category', 'start_time', 'end_time']
         widgets = {
             'start_time': forms.DateTimeInput(attrs={'type': 'datetime-local', 'class': 'form-control'}),
             'end_time': forms.DateTimeInput(attrs={'type': 'datetime-local', 'class': 'form-control'}),
+            'action_category': forms.Select(attrs={'class': 'form-select'}),
         }
+
+    def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
+        if self.user:
+            # ログインユーザーのカテゴリだけを表示する
+            self.fields['action_category'].queryset = ActionCategory.objects.filter(owner=self.user)
+            self.fields['action_category'].empty_label = "カテゴリを選択してください"
 
 # TaskForm は変更なし
 class TaskForm(forms.ModelForm):

@@ -33,4 +33,12 @@ urlpatterns = [
     path("action-items/edit-form/<int:pk>/", views.action_item_edit_form, name="action_item_edit_form"),
     path("action-items/update/<int:pk>/", views.action_item_update, name="action_item_update"),
     path("action-items/delete/<int:pk>/", views.action_item_delete, name="action_item_delete"),
+
+    # カテゴリ（アクションリスト）管理用
+    path("categories/", views.category_list, name="category_list"),
+    path("categories/create-form/", views.category_create_form, name="category_create_form"),
+    path("categories/create/", views.category_create, name="category_create"),
+    path("categories/edit-form/<int:pk>/", views.category_edit_form, name="category_edit_form"),
+    path("categories/update/<int:pk>/", views.category_update, name="category_update"),
+    path("categories/delete/<int:pk>/", views.category_delete, name="category_delete"),
 ]

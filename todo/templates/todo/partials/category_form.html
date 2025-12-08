@@ -1,0 +1,33 @@
+<div class="modal-content">
+    <form hx-post="{% if category %}{% url 'todo:category_update' category.pk %}{% else %}{% url 'todo:category_create' %}{% endif %}"
+          class="modal-form">
+        {% csrf_token %}
+        <div class="modal-header">
+            <h5 class="modal-title">
+                {% if category %}カテゴリ編集{% else %}カテゴリ作成{% endif %}
+            </h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+            <div class="mb-3">
+                <label for="{{ form.name.id_for_label }}" class="form-label">カテゴリ名</label>
+                {{ form.name }}
+                {% if form.name.errors %}
+                <div class="text-danger small">{{ form.name.errors }}</div>
+                {% endif %}
+            </div>
+            
+            <div class="mb-3">
+                <label for="{{ form.color.id_for_label }}" class="form-label">表示色</label>
+                <div class="d-flex align-items-center">
+                    {{ form.color }}
+                    <span class="ms-2 text-muted small">カレンダーでの表示色</span>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">キャンセル</button>
+            <button type="submit" class="btn btn-primary">保存</button>
+        </div>
+    </form>
+</div>
