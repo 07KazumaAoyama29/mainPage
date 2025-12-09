@@ -25,57 +25,165 @@
 {% endblock header %}
 
 {% block content %}
-<h2 id="countdown-timer" class="text-center text-primary mb-4">計算中...</h2>
+<h5 id="countdown-timer" class="text-center text-muted mb-4">計算中...</h5>
 
-  <div id="task-section">
+<div class="card mb-4 shadow-sm border-0" id="pomo-container" style="background-color: #ba4949; color: white; transition: background-color 0.5s;">
+    <div class="card-body text-center">
+        <div class="d-flex justify-content-center gap-2 mb-4">
+            <button id="btn-focus" class="btn btn-sm text-white fw-bold px-3" 
+                    style="background-color: rgba(0,0,0,0.15);" 
+                    onclick="switchMode('focus')">Focus</button>
+            
+            <button id="btn-break" class="btn btn-sm text-white px-3" 
+                    style="background-color: transparent;" 
+                    onclick="switchMode('break')">Break</button>
+        </div>
+
+        <div class="display-1 fw-bold mb-4" id="timer-display" style="cursor: pointer;" onclick="editTimer()" title="クリックして時間を変更">
+            25:00
+        </div>
+        
+        <button id="action-btn" class="btn btn-light text-danger fw-bold px-5 py-2 fs-4" onclick="toggleTimer()">
+            START
+        </button>
+    </div>
+</div>
+<div id="task-section">
     {% include 'todo/partials/task_list_and_progress.html' %}
-  </div>
-  <hr>
-  <a href="{% url 'todo:calendar' %}">カレンダーに戻る</a>
+</div>
+<hr>
+<a href="{% url 'todo:calendar' %}">カレンダーに戻る</a>
 {% endblock content %}
 
 {% block extra_js %}
 <script>
-  // Djangoテンプレートから終了時刻の文字列を取得
   const endTimeString = "{{ schedule.end_time.isoformat }}";
-  
-  // 終了時刻をJavaScriptのDateオブジェクトに変換
   const endTime = new Date(endTimeString);
-
-  // タイマーを表示するHTML要素を取得
   const timerElement = document.getElementById('countdown-timer');
 
-  // 1秒ごとに関数を実行する
   const countdownInterval = setInterval(() => {
-    // 現在時刻を取得
     const now = new Date();
-
-    // 終了時刻までの残り時間をミリ秒で計算
     const remainingTime = endTime - now;
 
-    // もし残り時間があれば
     if (remainingTime > 0) {
-      // ミリ秒を時、分、秒に変換
       const hours = Math.floor((remainingTime / (1000 * 60 * 60)) % 24);
       const minutes = Math.floor((remainingTime / 1000 / 60) % 60);
       const seconds = Math.floor((remainingTime / 1000) % 60);
-
-      // 2桁になるように0で埋める
       const paddedHours = String(hours).padStart(2, '0');
       const paddedMinutes = String(minutes).padStart(2, '0');
       const paddedSeconds = String(seconds).padStart(2, '0');
-
-      // HTML要素のテキストを更新
-      timerElement.textContent = `終了まであと ${paddedHours} 時間 ${paddedMinutes} 分 ${paddedSeconds} 秒`;
+      timerElement.textContent = `スケジュール終了まで: ${paddedHours}:${paddedMinutes}:${paddedSeconds}`;
     } else {
-      // 残り時間がなければ「終了しました」と表示
       timerElement.textContent = "このスケジュールは終了しました";
-      timerElement.classList.remove('text-primary');
+      timerElement.classList.remove('text-muted');
       timerElement.classList.add('text-success');
-      // インターバルを停止
       clearInterval(countdownInterval);
     }
-  }, 1000); // 1000ミリ秒 = 1秒ごと
+  }, 1000);
+</script>
+
+<script>
+let timerInterval = null;
+let timeLeft = 25 * 60; // 秒単位
+let isRunning = false;
+
+const alarmSound = new Audio('https://actions.google.com/sounds/v1/alarms/beep_short.ogg');
+// 音量を調整 (0.0 〜 1.0)
+alarmSound.volume = 0.5;
+
+const pomoContainer = document.getElementById('pomo-container');
+const timerDisplay = document.getElementById('timer-display');
+const actionBtn = document.getElementById('action-btn');
+const btnFocus = document.getElementById('btn-focus');
+const btnBreak = document.getElementById('btn-break');
+
+// モード設定（2種類）
+const modes = {
+    focus: { time: 25, color: '#ba4949', text: 'text-danger' },
+    break: { time: 15, color: '#38858a', text: 'text-info' }
+};
+let currentMode = 'focus';
+
+function updateDisplay() {
+    const m = Math.floor(timeLeft / 60);
+    const s = timeLeft % 60;
+    timerDisplay.textContent = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+}
+
+function switchMode(mode) {
+    pauseTimer();
+    currentMode = mode;
+    timeLeft = modes[mode].time * 60;
+    
+    // 背景色の変更
+    pomoContainer.style.backgroundColor = modes[mode].color;
+    
+    // STARTボタンの文字色変更
+    // 一旦クラスをリセットして再設定（正規表現でtext-〇〇を置換）
+    actionBtn.className = actionBtn.className.replace(/text-[a-z]+/, modes[mode].text);
+    
+    // タブの見た目変更（選択中は少し濃く、非選択は透明）
+    if (mode === 'focus') {
+        btnFocus.style.backgroundColor = "rgba(0,0,0,0.15)";
+        btnFocus.style.fontWeight = "bold";
+        btnBreak.style.backgroundColor = "transparent";
+        btnBreak.style.fontWeight = "normal";
+    } else {
+        btnBreak.style.backgroundColor = "rgba(0,0,0,0.15)";
+        btnBreak.style.fontWeight = "bold";
+        btnFocus.style.backgroundColor = "transparent";
+        btnFocus.style.fontWeight = "normal";
+    }
+    
+    updateDisplay();
+}
+
+function toggleTimer() {
+    if (isRunning) {
+        pauseTimer();
+    } else {
+        startTimer();
+    }
+}
+
+function startTimer() {
+    isRunning = true;
+    actionBtn.textContent = 'STOP';
+    // ボタンの押し込み効果（お好みで）
+    actionBtn.classList.add('shadow-none');
+    actionBtn.style.transform = "translateY(2px)";
+
+    timerInterval = setInterval(() => {
+        if (timeLeft > 0) {
+            timeLeft--;
+            updateDisplay();
+        } else {
+            pauseTimer();
+            alarmSound.play().catch(e => console.log("音声再生エラー:", e));
+            alert(currentMode === 'focus' ? "休憩しましょう！" : "集中に戻りましょう！");
+        }
+    }, 1000);
+}
+
+function pauseTimer() {
+    isRunning = false;
+    actionBtn.textContent = 'START';
+    actionBtn.classList.remove('shadow-none');
+    actionBtn.style.transform = "translateY(0)";
+    if (timerInterval) clearInterval(timerInterval);
+}
+
+function editTimer() {
+    pauseTimer();
+    let input = prompt("タイマーの時間（分）を入力してください:", Math.floor(timeLeft / 60));
+    if (input !== null && !isNaN(input) && input > 0) {
+        timeLeft = Math.round(parseFloat(input) * 60);
+        updateDisplay();
+    }
+}
+
+// 初期化
+updateDisplay();
 </script>
 
 <script>
@@ -85,23 +193,11 @@ document.addEventListener('DOMContentLoaded', (event) => {
         new Sortable(taskList, {
             handle: '.drag-handle',
             animation: 150,
-            // ドラッグ＆ドロップ操作が完了したときにこの関数が呼ばれる
             onEnd: function (evt) {
-                // 並び替えられた後のすべてのinput要素を取得
                 const inputs = taskList.querySelectorAll('input[name="task_pks"]');
-                
-                // input要素からvalue（タスクのID）を取り出して配列にする
                 const taskIds = Array.from(inputs).map(input => input.value);
-
-                // HTMXを使ってサーバーに新しい順序を送信
                 htmx.ajax('POST', '{% url "todo:reorder_tasks" %}', {
-                    // 送信するデータ
-                    values: {
-                        // 'task_pks'というキーで、IDの配列を渡す
-                        // Django側は request.POST.getlist('task_pks') で受け取る
-                        'task_pks': taskIds
-                    },
-                    // DjangoのCSRFトークンをヘッダーに含める
+                    values: {'task_pks': taskIds},
                     headers: {'X-CSRFToken': '{{ csrf_token }}'}
                 });
             }
