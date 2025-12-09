@@ -29,7 +29,18 @@
   </div>
 
   <div>
-    <button class="btn btn-sm btn-outline-secondary me-2" ...>編集</button>
-    <button class="btn btn-sm btn-outline-danger" ...>削除</button>
+    <button class="btn btn-sm btn-outline-secondary"
+        hx-get="{% url 'todo:action_item_edit_form' item.pk %}"
+        hx-target="#dialog"
+        hx-swap="innerHTML"
+        data-bs-toggle="modal" 
+        data-bs-target="#modal">
+    編集
+</button>
+    <button class="btn btn-sm btn-outline-danger"
+        hx-post="{% url 'todo:action_item_delete' item.pk %}"
+        hx-confirm="本当に「{{ item.title }}」を削除しますか？"
+        hx-target="body"> 削除
+</button>
   </div>
 </div>

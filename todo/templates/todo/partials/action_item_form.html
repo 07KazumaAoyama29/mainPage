@@ -1,24 +1,31 @@
-{% if item %}
-<form hx-post="{% url 'todo:action_item_update' pk=item.pk %}">
-{% else %}
-<form hx-post="{% url 'todo:action_item_create' %}">
-{% endif %}
-  {% csrf_token %}
-  <div class="modal-header">
-    <h5 class="modal-title">
-      {% if item %}
-        やることの編集
-      {% else %}
-        新しいやることの作成
-      {% endif %}
-    </h5>
-    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-  </div>
-  <div class="modal-body">
-    {{ form.as_p }}
-  </div>
-  <div class="modal-footer">
-    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">閉じる</button>
-    <button type="submit" class="btn btn-primary">保存</button>
-  </div>
-</form>
+<div class="modal-content">
+    <form hx-post="{% if item %}{% url 'todo:action_item_update' item.pk %}{% else %}{% url 'todo:action_item_create' %}{% endif %}"
+          class="modal-form">
+        {% csrf_token %}
+        
+        <div class="modal-header">
+            <h5 class="modal-title">
+                {% if item %}やることの編集{% else %}新しいやること{% endif %}
+            </h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        
+        <div class="modal-body">
+            {{ form.as_p }}
+        </div>
+        
+        <div class="modal-footer">
+            {% if item %}
+            <button type="button" class="btn btn-danger me-auto"
+                    hx-post="{% url 'todo:action_item_delete' item.pk %}"
+                    hx-confirm="本当に削除しますか？"
+                    hx-target="body">
+                削除
+            </button>
+            {% endif %}
+            
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">キャンセル</button>
+            <button type="submit" class="btn btn-primary">保存</button>
+        </div>
+    </form>
+</div>
