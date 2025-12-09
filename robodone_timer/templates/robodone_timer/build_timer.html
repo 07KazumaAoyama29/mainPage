@@ -1,0 +1,231 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ロボット制作タイマー</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #fff3cd; /* 制作モードっぽい暖色系 */
+            font-family: "Helvetica Neue", Arial, sans-serif;
+        }
+        .timer-card {
+            border-radius: 20px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+            background-color: white;
+            padding: 30px;
+        }
+        .char-img {
+            width: 150px;
+            height: auto;
+            object-fit: contain;
+        }
+        .time-display {
+            font-size: 11rem;
+            font-weight: bold;
+            line-height: 1;
+            color: #333;
+        }
+        /* アニメーション：残り時間が少なくなったら点滅させる等の拡張用 */
+        .time-warning {
+            color: #dc3545;
+            animation: pulse 1s infinite;
+        }
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container py-5 text-center">
+        <h1 class="mb-5 display-5 fw-bold">ロボット制作タイマー</h1>
+
+        <div class="row align-items-center justify-content-center">
+            
+            <div class="col-md-2 d-none d-md-block">
+                <img src="{% static 'robodone_timer/images/nezubotto.jpg' %}" alt="ねずボット" class="char-img rounded-circle shadow">
+                <h4 class="mt-3 text-muted">ねずボット</h4>
+            </div>
+
+            <div class="col-md-8">
+                <div class="timer-card">
+                    <div class="row justify-content-center mb-4" id="settingRow">
+                        <div class="col-auto">
+                            <div class="input-group input-group-lg">
+                                <input type="number" id="inputMin" class="form-control" value="15" min="0" max="99" style="width: 100px; text-align: center;">
+                                <span class="input-group-text">分</span>
+                                <input type="number" id="inputSec" class="form-control" value="0" min="0" max="59" style="width: 100px; text-align: center;">
+                                <span class="input-group-text">秒</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="display-1 time-display mb-3" id="timerDisplay">15:00</div>
+
+                    <div class="progress mb-4" style="height: 20px;">
+                        <div id="progressBar" class="progress-bar bg-warning progress-bar-striped progress-bar-animated" role="progressbar" style="width: 100%"></div>
+                    </div>
+
+                    <div class="d-flex justify-content-center gap-3">
+                        <button class="btn btn-primary btn-lg px-5" id="startBtn" onclick="startTimer()">スタート</button>
+                        <button class="btn btn-warning btn-lg px-5" id="stopBtn" onclick="stopTimer()" disabled>ストップ</button>
+                        <button class="btn btn-secondary btn-lg px-5" id="resetBtn" onclick="resetTimer()" disabled>リセット</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-2 d-none d-md-block">
+                <img src="{% static 'robodone_timer/images/robonyan.jpg' %}" alt="ロボにゃん" class="char-img rounded-circle shadow">
+                <h4 class="mt-3 text-muted">ロボにゃん</h4>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-center gap-3 mt-5">
+            <a href="{% url 'robot_timer:pair_timer' %}" class="btn btn-primary btn-lg px-4">
+                ペアプロ（交代タイマー）へ移動 
+            </a>
+
+            <a href="{% url 'robot_timer:menu' %}" class="btn btn-secondary btn-lg px-4">
+                メニューに戻る 
+            </a>
+        </div>
+
+    <audio id="timerSound" src="{% static 'robodone_timer/sounds/timer.mp3' %}" preload="auto"></audio>
+
+    <script>
+        let intervalId = null;
+        let totalTimeSec = 0;
+        let remainingTimeSec = 0;
+        let isPaused = false;
+
+        const timerSound = document.getElementById('timerSound');
+        const display = document.getElementById('timerDisplay');
+        const progressBar = document.getElementById('progressBar');
+
+        function startTimer() {
+            if (intervalId) return;
+
+            // 新規スタート時のみ時間を取得
+            if (!isPaused && remainingTimeSec === 0) {
+                const min = parseInt(document.getElementById('inputMin').value) || 0;
+                const sec = parseInt(document.getElementById('inputSec').value) || 0;
+                totalTimeSec = (min * 60) + sec;
+                
+                if (totalTimeSec <= 0) return alert("時間を設定してください");
+                
+                remainingTimeSec = totalTimeSec;
+            }
+
+            isPaused = false;
+            toggleInputs(true);
+            updateButtons('running');
+            updateDisplay();
+
+            intervalId = setInterval(() => {
+                remainingTimeSec--;
+                updateDisplay();
+
+                if (remainingTimeSec <= 0) {
+                    finishTimer();
+                }
+            }, 1000);
+        }
+
+        function stopTimer() {
+            if (intervalId) {
+                clearInterval(intervalId);
+                intervalId = null;
+                isPaused = true;
+                updateButtons('paused');
+            }
+        }
+
+        function resetTimer() {
+            clearInterval(intervalId);
+            intervalId = null;
+            isPaused = false;
+            remainingTimeSec = 0;
+            
+            // 入力欄の値に戻す
+            const min = parseInt(document.getElementById('inputMin').value) || 0;
+            const sec = parseInt(document.getElementById('inputSec').value) || 0;
+            const defaultStr = `${String(min).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+            
+            display.innerText = defaultStr;
+            display.classList.remove('time-warning');
+            progressBar.style.width = '100%';
+            progressBar.className = 'progress-bar bg-warning progress-bar-striped progress-bar-animated';
+            
+            toggleInputs(false);
+            updateButtons('stopped');
+        }
+
+        function finishTimer() {
+            clearInterval(intervalId);
+            intervalId = null;
+            remainingTimeSec = 0;
+            updateDisplay();
+            
+            timerSound.play().catch(e => console.log(e));
+            
+            setTimeout(() => {
+                alert("制作終了です！片付けましょう！");
+                resetTimer();
+            }, 500);
+        }
+
+        function updateDisplay() {
+            const m = Math.floor(remainingTimeSec / 60);
+            const s = remainingTimeSec % 60;
+            display.innerText = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+
+            // プログレスバー更新
+            if (totalTimeSec > 0) {
+                const percent = (remainingTimeSec / totalTimeSec) * 100;
+                progressBar.style.width = `${percent}%`;
+                
+                // 残り時間が少ない時の色変化（20%以下で赤）
+                if (percent < 20) {
+                    progressBar.classList.remove('bg-warning');
+                    progressBar.classList.add('bg-danger');
+                    display.classList.add('time-warning');
+                }
+            }
+        }
+
+        function toggleInputs(disabled) {
+            document.getElementById('inputMin').disabled = disabled;
+            document.getElementById('inputSec').disabled = disabled;
+        }
+
+        function updateButtons(state) {
+            const startBtn = document.getElementById('startBtn');
+            const stopBtn = document.getElementById('stopBtn');
+            const resetBtn = document.getElementById('resetBtn');
+
+            if (state === 'running') {
+                startBtn.disabled = true;
+                stopBtn.disabled = false;
+                resetBtn.disabled = false;
+            } else if (state === 'paused') {
+                startBtn.disabled = false;
+                startBtn.innerText = "再開";
+                stopBtn.disabled = true;
+                resetBtn.disabled = false;
+            } else if (state === 'stopped') {
+                startBtn.disabled = false;
+                startBtn.innerText = "スタート";
+                stopBtn.disabled = true;
+                resetBtn.disabled = true;
+            }
+        }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
