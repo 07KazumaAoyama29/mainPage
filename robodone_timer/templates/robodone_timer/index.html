@@ -15,13 +15,30 @@
             border-radius: 15px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.1);
         }
+        /* メイン表示用の画像サイズ */
+        .char-img {
+            width: 200px;
+            height: auto;
+            object-fit: contain;
+        }
+        /* タイトル左右のミニ画像用スタイル */
+        .title-icon {
+            height: 60px; /* タイトル文字の大きさに合わせる */
+            width: auto;
+            vertical-align: middle; /* 文字の高さと揃える */
+            margin: 0 10px; /* 文字との間隔 */
+            border-radius: 50%; /* お好みで少し丸くする */
+        }
     </style>
 </head>
 <body>
 
     <div class="container py-5">
-        <h1 class="text-center mb-4">🤖 交代タイマー 🐱</h1>
-    
+        <h1 class="text-center mb-4 display-4 fw-bold">
+            <img src="{% static 'robodone_timer/images/nezubotto.jpg' %}" alt="ねずボット" class="title-icon">
+            交代タイマー
+            <img src="{% static 'robodone_timer/images/robonyan.jpg' %}" alt="ロボにゃん" class="title-icon">
+        </h1>
         <div class="card mb-4 timer-card">
             <div class="card-body">
                 <form onsubmit="return false;">
@@ -54,8 +71,9 @@
                         </div>
     
                         <div class="col-auto ms-md-4">
-                            <button class="btn btn-primary px-4" onclick="startTimer()" id="startBtn">スタート</button>
-                            <button class="btn btn-secondary px-4" onclick="resetTimer()" id="resetBtn" disabled>リセット</button>
+                            <button class="btn btn-primary px-3" onclick="startTimer()" id="startBtn">スタート</button>
+                            <button class="btn btn-warning px-3" onclick="stopTimer()" id="stopBtn" disabled>ストップ</button>
+                            <button class="btn btn-secondary px-3" onclick="resetTimer()" id="resetBtn" disabled>リセット</button>
                         </div>
                     </div>
                 </form>
@@ -64,10 +82,10 @@
     
         <div class="row">
             <div class="col-md-6 mb-3">
-                <div class="card h-100 text-center timer-card" id="charCard" style="background-color: #f8f9fa; transition: background-color 0.5s;">
+                <div class="card h-100 text-center timer-card" id="charCard" style="background-color: #e3f2fd; transition: background-color 0.5s;">
                     <div class="card-body d-flex flex-column justify-content-center align-items-center" style="min-height: 300px;">
-                        <div id="charIcon" style="font-size: 8rem;">🐭</div>
-                        <h2 class="display-4 fw-bold" id="charName">ねずボット</h2>
+                        <div id="charIcon" style="min-height: 200px; display: flex; align-items: center;"></div>
+                        <h2 class="display-4 fw-bold mt-3" id="charName">ねずボット</h2>
                         <p class="fs-4 text-muted" id="turnStatus">待機中...</p>
                     </div>
                 </div>
@@ -100,35 +118,59 @@
         let turnSecondsLeft = 0;
         let currentTurnIndex = 0; 
         let turnDurationSec = 0;
+        let isPaused = false;
     
         const charConfig = [
-            { name: "ねずボット", icon: "🐭", color: "#e3f2fd", class: "bg-info" },
-            { name: "ロボにゃん", icon: "🐱", color: "#fce4ec", class: "bg-danger" }
+            { 
+                name: "ねずボット", 
+                icon: `<img src="{% static 'robodone_timer/images/nezubotto.jpg' %}" class="char-img" alt="ねずボット">`, 
+                color: "#e3f2fd", 
+                class: "bg-info" 
+            },
+            { 
+                name: "ロボにゃん", 
+                icon: `<img src="{% static 'robodone_timer/images/robonyan.jpg' %}" class="char-img" alt="ロボにゃん">`,
+                color: "#fce4ec", 
+                class: "bg-danger" 
+            }
         ];
     
-        // 音声ファイルの設定（必要に応じて変更してください）
         const switchSound = new Audio("{% static 'robodone_timer/sounds/timer.mp3' %}");
     
+        window.onload = function() {
+            updateCharacter();
+        };
+    
         function startTimer() {
-            const totalMin = parseInt(document.getElementById('totalMin').value) || 0;
-            const totalSec = parseInt(document.getElementById('totalSec').value) || 0;
-            const turnMin = parseInt(document.getElementById('turnMin').value) || 0;
-            const turnSec = parseInt(document.getElementById('turnSec').value) || 0;
-    
-            const totalDuration = (totalMin * 60) + totalSec;
-            turnDurationSec = (turnMin * 60) + turnSec;
-    
-            if (totalDuration <= 0 || turnDurationSec <= 0) {
-                return alert("有効な時間を入力してください");
+            if (intervalId) return;
+
+            if (!isPaused && totalSecondsLeft === 0) {
+                const totalMin = parseInt(document.getElementById('totalMin').value) || 0;
+                const totalSec = parseInt(document.getElementById('totalSec').value) || 0;
+                const turnMin = parseInt(document.getElementById('turnMin').value) || 0;
+                const turnSec = parseInt(document.getElementById('turnSec').value) || 0;
+        
+                const totalDuration = (totalMin * 60) + totalSec;
+                turnDurationSec = (turnMin * 60) + turnSec;
+        
+                if (totalDuration <= 0 || turnDurationSec <= 0) {
+                    return alert("有効な時間を入力してください");
+                }
+        
+                totalSecondsLeft = totalDuration;
+                turnSecondsLeft = turnDurationSec;
+                currentTurnIndex = 0;
+                updateCharacter();
             }
     
-            totalSecondsLeft = totalDuration;
-            turnSecondsLeft = turnDurationSec;
-            currentTurnIndex = 0;
-    
+            isPaused = false;
             setInputsDisabled(true);
+            
+            document.getElementById('startBtn').disabled = true;
+            document.getElementById('stopBtn').disabled = false;
+            document.getElementById('resetBtn').disabled = false;
+
             updateDisplay();
-            updateCharacter();
     
             intervalId = setInterval(() => {
                 totalSecondsLeft--;
@@ -148,33 +190,56 @@
                 updateDisplay();
             }, 1000);
         }
+        
+        function stopTimer() {
+            if (intervalId) {
+                clearInterval(intervalId);
+                intervalId = null;
+                isPaused = true;
+                
+                document.getElementById('startBtn').disabled = false;
+                document.getElementById('startBtn').innerText = "再開";
+                document.getElementById('stopBtn').disabled = true;
+            }
+        }
     
         function resetTimer() {
             clearInterval(intervalId);
+            intervalId = null;
+            isPaused = false;
+            totalSecondsLeft = 0;
+            turnSecondsLeft = 0;
+            currentTurnIndex = 0;
+
             setInputsDisabled(false);
             
+            document.getElementById('startBtn').disabled = false;
+            document.getElementById('startBtn').innerText = "スタート";
+            document.getElementById('stopBtn').disabled = true;
+            document.getElementById('resetBtn').disabled = true;
+
             document.getElementById('totalCountdown').innerText = "00:00";
             document.getElementById('turnCountdown').innerText = "00:00";
             document.getElementById('turnProgress').style.width = "0%";
-            
-            document.getElementById('charIcon').innerText = "🐭";
-            document.getElementById('charName').innerText = "ねずボット";
-            document.getElementById('charCard').style.backgroundColor = "#f8f9fa";
             document.getElementById('turnStatus').innerText = "待機中...";
+            
+            updateCharacter();
         }
     
         function finishTimer() {
             clearInterval(intervalId);
+            intervalId = null;
             totalSecondsLeft = 0;
             turnSecondsLeft = 0;
             updateDisplay();
-            alert("終了です！お疲れ様でした！");
-            resetTimer();
+            
+            setTimeout(() => {
+                alert("終了です！お疲れ様でした！");
+                resetTimer();
+            }, 100);
         }
     
         function setInputsDisabled(disabled) {
-            document.getElementById('startBtn').disabled = disabled;
-            document.getElementById('resetBtn').disabled = !disabled;
             document.querySelectorAll('input[type="number"]').forEach(input => input.disabled = disabled);
         }
     
@@ -189,16 +254,23 @@
             document.getElementById('turnCountdown').innerText = 
                 `${String(turnM).padStart(2, '0')}:${String(turnS).padStart(2, '0')}`;
     
-            const percentage = ((turnDurationSec - turnSecondsLeft) / turnDurationSec) * 100;
-            document.getElementById('turnProgress').style.width = `${percentage}%`;
+            if (turnDurationSec > 0) {
+                const percentage = ((turnDurationSec - turnSecondsLeft) / turnDurationSec) * 100;
+                document.getElementById('turnProgress').style.width = `${percentage}%`;
+            }
         }
     
         function updateCharacter() {
             const char = charConfig[currentTurnIndex];
-            document.getElementById('charIcon').innerText = char.icon;
+            document.getElementById('charIcon').innerHTML = char.icon;
             document.getElementById('charName').innerText = char.name;
             document.getElementById('charCard').style.backgroundColor = char.color;
-            document.getElementById('turnStatus').innerText = "のターン！";
+            
+            if (intervalId === null && !isPaused && totalSecondsLeft === 0) {
+                 document.getElementById('turnStatus').innerText = "待機中...";
+            } else {
+                 document.getElementById('turnStatus').innerText = "のターン！";
+            }
             
             const bar = document.getElementById('turnProgress');
             bar.className = `progress-bar progress-bar-striped progress-bar-animated ${currentTurnIndex === 0 ? 'bg-info' : 'bg-danger'}`;
