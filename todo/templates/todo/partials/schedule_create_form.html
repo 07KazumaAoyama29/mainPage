@@ -24,11 +24,21 @@
     </div>
 
     <div class="mb-3" id="create-page-count-area" style="display: none;">
-        <label for="{{ form.page_count.id_for_label }}" class="form-label">読んだページ数</label>
+        <label class="form-label">読書ページ記録</label>
+        
+        <div class="input-group mb-2">
+            <span class="input-group-text">P.</span>
+            {{ form.start_page }}
+            <span class="input-group-text">〜</span>
+            {{ form.end_page }}
+        </div>
+
         <div class="input-group">
+            <span class="input-group-text">合計</span>
             {{ form.page_count }}
             <span class="input-group-text">ページ</span>
         </div>
+        <div class="form-text small">終了ページを入力すると自動で差分が計算されます</div>
     </div>
 
     <div class="row">
@@ -58,14 +68,35 @@
         const categorySelect = document.getElementById('id_action_category');
         const itemSelect = document.getElementById('id_action_item');
         const pageCountArea = document.getElementById('create-page-count-area');
-        const pageCountInput = document.getElementById('id_page_count');
+        
+        // ★追加: 計算用の入力要素を取得
+        // forms.pyでwidgetのattrsにidを設定している前提（例: id='id_start_page'）
+        const startInput = document.getElementById('id_start_page');
+        const endInput = document.getElementById('id_end_page');
+        const countInput = document.getElementById('id_page_count');
+
+        // ▼ 自動計算ロジック
+        function calculatePages() {
+            const start = parseInt(startInput.value) || 0;
+            const end = parseInt(endInput.value) || 0;
+            
+            // 終了ページが入力されていて、かつ開始ページ以上の場合に計算
+            if (endInput.value !== '' && end >= start) {
+                countInput.value = end - start;
+            }
+        }
+
+        // 入力イベントに計算ロジックを紐付け
+        if (startInput && endInput) {
+            startInput.addEventListener('input', calculatePages);
+            endInput.addEventListener('input', calculatePages);
+        }
 
         // ▼ 1. アイテムリストを更新する関数
         function updateItemOptions() {
             const selectedId = categorySelect.value;
-            const currentItemId = itemSelect.value; // 今選ばれている値を保存
+            const currentItemId = itemSelect.value;
 
-            // 選択肢をクリア（"指定なし" だけ残す）
             itemSelect.innerHTML = '<option value="">（指定なし）</option>';
 
             if (selectedId && itemsByCategory[selectedId]) {
@@ -78,35 +109,31 @@
                 });
             }
             
-            // カテゴリ変更後も、もし同じIDのアイテムがあれば選択状態を維持（編集時などに有効）
             if (currentItemId) {
-                // optionが存在するか確認してからセットするのが丁寧だが、
-                // 存在しない値をセットしても無視されるだけなので簡易的にセット
                 itemSelect.value = currentItemId;
             }
         }
 
-        // ▼ 2. ページ数入力欄の表示/非表示を切り替える関数（ここが消えていました！）
+        // ▼ 2. ページ数入力欄の表示/非表示を切り替える関数
         function togglePageCount() {
             const selectedId = categorySelect.value;
-            // マップを参照して、記録対象なら表示
             if (selectedId && trackPagesMap[selectedId]) {
                 pageCountArea.style.display = 'block';
             } else {
                 pageCountArea.style.display = 'none';
-                if (pageCountInput) pageCountInput.value = ''; // 隠すときは値をクリア
+                if (countInput) countInput.value = ''; // 隠すときは値をクリア
+                // 開始・終了もクリアする場合は以下を追加
+                if (startInput) startInput.value = '';
+                if (endInput) endInput.value = '';
             }
         }
 
         if (categorySelect) {
-            // カテゴリ変更時に両方の処理を実行
             categorySelect.addEventListener('change', function() {
                 updateItemOptions();
                 togglePageCount();
             });
             
-            // 初期表示時の実行（ページ数表示のみ）
-            // アイテムリストはサーバー側で初期構築されているはずなので、JSでの更新は必須ではない
             togglePageCount();
         }
     })();

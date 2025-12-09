@@ -5,7 +5,7 @@
     <h3>やることリスト</h3>
     <button class="btn btn-primary"
             hx-get="{% url 'todo:action_item_create_form' %}"
-            hx-target="#modal-content"
+            hx-target="#dialog"  hx-swap="innerHTML"
             data-bs-toggle="modal"
             data-bs-target="#modal">
       <i class="fas fa-plus"></i> 新規作成

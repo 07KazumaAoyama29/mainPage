@@ -39,23 +39,19 @@
       selectable: true,
       // 日付や時間がクリックされた時に実行される関数
   dateClick: function(info) {
-    // モーダルの中身（フォーム）を取得するためのURLを生成
+    // 1. URLを生成
     const url = `{% url 'todo:create_form' %}?start_time=${info.dateStr}`;
     
-    // モーダルのDOM要素を取得
-    const modalContent = document.getElementById('modal-content');
+    // 2. モーダルを先に表示（空の状態で）
     const modal = new bootstrap.Modal(document.getElementById('modal'));
+    modal.show();
 
-    // fetch APIを使って、サーバーからフォームのHTMLを取得
-    fetch(url)
-      .then(response => response.text())
-      .then(html => {
-        // 1. 取得したHTMLをモーダルの中身に挿入
-        modalContent.innerHTML = html;
-        // 2. モーダルを表示
-        modal.show();
-      });
-  },
+    // 3. HTMXを使って中身をロード（これならスクリプトが動く！）
+    htmx.ajax('GET', url, {
+        target: '#modal-content',
+        swap: 'innerHTML'
+    });
+},
       editable: true,
       eventDrop: function(info) {
         const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;

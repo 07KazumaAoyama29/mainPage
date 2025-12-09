@@ -14,15 +14,9 @@ class ActionCategory(models.Model):
 
 # --- 1. 新しい「やることリスト」のモデル ---
 class ActionItem(models.Model):
-    ACTION_TYPE_CHOICES = [
-        ('読書', '読書'), ('研究', '研究'), ('バイト', 'バイト'),
-        ('娯楽', '娯楽'), ('ジム', 'ジム'), ('その他', 'その他'),
-    ]
-
     category = models.ForeignKey(ActionCategory, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="カテゴリ")
 
     title = models.CharField("タイトル", max_length=100)
-    action_type = models.CharField("種類", max_length=10, choices=ACTION_TYPE_CHOICES)
     due_date = models.DateField("期日", null=True, blank=True)
     is_scheduled = models.BooleanField("スケジュール済み", default=False)
     owner = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -57,7 +51,8 @@ class Schedule(models.Model):
 
     # ↓ Scheduleモデル自体が持っていた詳細情報はActionItemに移動したので削除
     # task_type, description, text1, text2, text3, text4, int1 を削除
-
+    start_page = models.IntegerField("開始ページ", null=True, blank=True)
+    end_page = models.IntegerField("終了ページ", null=True, blank=True)
 
     page_count = models.IntegerField("ページ数", null=True, blank=True)
 

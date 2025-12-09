@@ -1,3 +1,5 @@
+{# templates/todo/partials/schedule_edit_form.html #}
+
 <form id="edit-task-form" hx-post="{% url 'todo:update' pk=schedule.pk %}">
   {% csrf_token %}
   <div class="modal-header">
@@ -21,11 +23,21 @@
     </div>
 
     <div class="mb-3" id="edit-page-count-area" style="display: none;">
-        <label for="{{ form.page_count.id_for_label }}" class="form-label">読んだページ数</label>
+        <label class="form-label">読書ページ記録</label>
+        
+        <div class="input-group mb-2">
+            <span class="input-group-text">P.</span>
+            {{ form.start_page }}
+            <span class="input-group-text">〜</span>
+            {{ form.end_page }}
+        </div>
+
         <div class="input-group">
+            <span class="input-group-text">合計</span>
             {{ form.page_count }}
             <span class="input-group-text">ページ</span>
         </div>
+        <div class="form-text small">終了ページを入力すると自動計算されます</div>
     </div>
 
     <div class="row">
@@ -62,20 +74,37 @@
         const itemsByCategory = {{ items_by_category|safe }};
         
         // 編集フォーム内の要素を取得
-        // ※ID重複を避けるため、フォーム要素起点で探すのが安全ですが、
-        // 今回はforms.pyでID指定している前提でgetElementByIdを使います。
-        // もし作成フォームと同時に開くことがなければこれで動きます。
+        // ※ID重複を避けるため、フォーム要素起点で探すのが安全ですが、forms.pyでID指定している前提で書きます
         const categorySelect = document.getElementById('id_action_category');
         const itemSelect = document.getElementById('id_action_item');
         const pageCountArea = document.getElementById('edit-page-count-area');
+        
+        // ★計算用の要素も取得
+        const startInput = document.getElementById('id_start_page');
+        const endInput = document.getElementById('id_end_page');
+        const countInput = document.getElementById('id_page_count');
 
-        // ▼ 1. アイテムリストを更新する関数
+        // ▼ 自動計算ロジック
+        function calculatePages() {
+            const start = parseInt(startInput.value) || 0;
+            const end = parseInt(endInput.value) || 0;
+            if (endInput.value !== '' && end >= start) {
+                countInput.value = end - start;
+            }
+        }
+
+        // 入力イベントに計算ロジックを紐付け
+        if (startInput && endInput) {
+            startInput.addEventListener('input', calculatePages);
+            endInput.addEventListener('input', calculatePages);
+        }
+
+        // ▼ アイテムリスト更新
         function updateItemOptions() {
             const selectedId = categorySelect.value;
-            // ★重要: 編集時は「元々保存されていた値」が初期状態で入っているはずなので、それをキープしたい
+            // 編集時は「元々保存されていた値」をキープしたい
             const currentItemId = itemSelect.value; 
 
-            // 選択肢をクリア
             itemSelect.innerHTML = '<option value="">（指定なし）</option>';
 
             if (selectedId && itemsByCategory[selectedId]) {
@@ -88,37 +117,32 @@
                 });
             }
             
-            // リスト再構築後に、元の値を再選択する
+            // リスト再構築後に、元の値を再選択
             if (currentItemId) {
                 itemSelect.value = currentItemId;
             }
         }
 
-        // ▼ 2. ページ数入力欄の表示/非表示
+        // ▼ 表示切替
         function togglePageCount() {
             const selectedId = categorySelect.value;
             if (selectedId && trackPagesMap[selectedId]) {
                 pageCountArea.style.display = 'block';
             } else {
                 pageCountArea.style.display = 'none';
-                // 編集時は、カテゴリを変えても誤操作防止のため値はクリアしないほうが親切かもしれません
-                // pageCountInput.value = ''; 
             }
         }
 
         if (categorySelect) {
+            // カテゴリ変更時はリスト更新も行う
             categorySelect.addEventListener('change', function() {
                 updateItemOptions();
                 togglePageCount();
             });
             
-            // ★初期実行
-            // 編集画面では「既にDBに入っている値」を元に表示を復元する必要があります。
-            // しかし、サーバー側(Django)のフォームレンダリングで既に正しい<option>が出ているはずなので、
-            // updateItemOptions() を即実行すると、Djangoがセットしてくれた初期値を消してしまう恐れがあります。
-            // なので、初期ロード時は「ページ数の表示判定」だけ行い、
-            // アイテムリストの更新は「カテゴリを変更した時」だけに任せるのが安全です。
-            
+            // ★編集画面の初期ロード時
+            // ここでは「表示切替」だけ行い、アイテムリストの再構築(updateItemOptions)は行わない
+            // （Djangoが既に正しい選択状態のHTMLを作ってくれているため）
             togglePageCount();
         }
     })();
