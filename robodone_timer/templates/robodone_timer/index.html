@@ -12,22 +12,33 @@
             font-family: "Helvetica Neue", Arial, sans-serif;
         }
         .timer-card {
-            border-radius: 15px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            border-radius: 20px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+            background-color: white;
+            padding: 20px;
         }
-        /* メイン表示用の画像サイズ */
         .char-img {
             width: 200px;
             height: auto;
             object-fit: contain;
         }
-        /* タイトル左右のミニ画像用スタイル */
         .title-icon {
-            height: 60px; /* タイトル文字の大きさに合わせる */
+            height: 60px;
             width: auto;
-            vertical-align: middle; /* 文字の高さと揃える */
-            margin: 0 10px; /* 文字との間隔 */
-            border-radius: 50%; /* お好みで少し丸くする */
+            vertical-align: middle;
+            margin: 0 10px;
+            border-radius: 50%;
+        }
+        .turn-display {
+            font-size: 7rem;
+            font-weight: bold;
+            line-height: 1;
+            color: #dc3545;
+        }
+        .total-display {
+            font-size: 3rem;
+            font-weight: bold;
+            color: #333;
         }
     </style>
 </head>
@@ -39,6 +50,7 @@
             交代タイマー
             <img src="{% static 'robodone_timer/images/robonyan.jpg' %}" alt="ロボにゃん" class="title-icon">
         </h1>
+    
         <div class="card mb-4 timer-card">
             <div class="card-body">
                 <form onsubmit="return false;">
@@ -49,9 +61,9 @@
                         </div>
                         <div class="col-auto">
                             <div class="input-group">
-                                <input type="number" id="totalMin" class="form-control" value="60" min="0" style="width: 80px;">
+                                <input type="number" id="totalMin" class="form-control" value="30" min="0" style="width: 80px;" oninput="updateFromInput()">
                                 <span class="input-group-text">分</span>
-                                <input type="number" id="totalSec" class="form-control" value="0" min="0" max="59" style="width: 80px;">
+                                <input type="number" id="totalSec" class="form-control" value="0" min="0" max="59" style="width: 80px;" oninput="updateFromInput()">
                                 <span class="input-group-text">秒</span>
                             </div>
                         </div>
@@ -63,9 +75,9 @@
                         </div>
                         <div class="col-auto">
                             <div class="input-group">
-                                <input type="number" id="turnMin" class="form-control" value="10" min="0" style="width: 80px;">
+                                <input type="number" id="turnMin" class="form-control" value="2" min="0" style="width: 80px;" oninput="updateFromInput()">
                                 <span class="input-group-text">分</span>
-                                <input type="number" id="turnSec" class="form-control" value="0" min="0" max="59" style="width: 80px;">
+                                <input type="number" id="turnSec" class="form-control" value="0" min="0" max="59" style="width: 80px;" oninput="updateFromInput()">
                                 <span class="input-group-text">秒</span>
                             </div>
                         </div>
@@ -81,7 +93,7 @@
         </div>
     
         <div class="row">
-            <div class="col-md-6 mb-3">
+            <div class="col-md-5 mb-3">
                 <div class="card h-100 text-center timer-card" id="charCard" style="background-color: #e3f2fd; transition: background-color 0.5s;">
                     <div class="card-body d-flex flex-column justify-content-center align-items-center" style="min-height: 300px;">
                         <div id="charIcon" style="min-height: 200px; display: flex; align-items: center;"></div>
@@ -91,24 +103,40 @@
                 </div>
             </div>
     
-            <div class="col-md-6 mb-3">
+            <div class="col-md-7 mb-3">
                 <div class="card h-100 timer-card">
                     <div class="card-body d-flex flex-column justify-content-center text-center">
                         
-                        <h5 class="text-muted">全体残り時間</h5>
-                        <div class="display-1 fw-bold mb-4" id="totalCountdown">00:00</div>
+                        <div class="mb-3">
+                            <h5 class="text-muted mb-0">全体残り時間</h5>
+                            <div class="total-display" id="totalCountdown">30:00</div>
+                            <div class="progress mt-2" style="height: 10px;">
+                                <div id="totalProgress" class="progress-bar bg-success" role="progressbar" style="width: 0%"></div>
+                            </div>
+                        </div>
                         
                         <hr>
     
-                        <h5 class="text-muted">交代まであと</h5>
-                        <div class="display-2 fw-bold text-danger" id="turnCountdown">00:00</div>
+                        <div>
+                            <h5 class="text-muted mb-0">交代まであと</h5>
+                            <div class="turn-display" id="turnCountdown">2:00</div>
+                        </div>
     
-                        <div class="progress mt-3" style="height: 25px;">
+                        <div class="progress mt-3" style="height: 30px;">
                             <div id="turnProgress" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
                         </div>
                     </div>
                 </div>
             </div>
+        </div>
+
+        <div class="d-flex justify-content-center gap-3 mt-5">
+            <a href="{% url 'robot_timer:build_timer' %}" class="btn btn-warning btn-lg px-4">
+                ロボット制作へ
+            </a>
+            <a href="{% url 'robot_timer:menu' %}" class="btn btn-secondary btn-lg px-4">
+                メニューに戻る
+            </a>
         </div>
     </div>
     
@@ -118,6 +146,7 @@
         let turnSecondsLeft = 0;
         let currentTurnIndex = 0; 
         let turnDurationSec = 0;
+        let totalDurationSec = 0; 
         let isPaused = false;
     
         const charConfig = [
@@ -139,7 +168,22 @@
     
         window.onload = function() {
             updateCharacter();
+            updateFromInput();
         };
+
+        function updateFromInput() {
+            if (intervalId || isPaused) return;
+
+            const tMin = parseInt(document.getElementById('totalMin').value) || 0;
+            const tSec = parseInt(document.getElementById('totalSec').value) || 0;
+            const uMin = parseInt(document.getElementById('turnMin').value) || 0;
+            const uSec = parseInt(document.getElementById('turnSec').value) || 0;
+
+            document.getElementById('totalCountdown').innerText = 
+                `${String(tMin).padStart(2, '0')}:${String(tSec).padStart(2, '0')}`;
+            document.getElementById('turnCountdown').innerText = 
+                `${String(uMin).padStart(2, '0')}:${String(uSec).padStart(2, '0')}`;
+        }
     
         function startTimer() {
             if (intervalId) return;
@@ -150,14 +194,14 @@
                 const turnMin = parseInt(document.getElementById('turnMin').value) || 0;
                 const turnSec = parseInt(document.getElementById('turnSec').value) || 0;
         
-                const totalDuration = (totalMin * 60) + totalSec;
+                totalDurationSec = (totalMin * 60) + totalSec;
                 turnDurationSec = (turnMin * 60) + turnSec;
         
-                if (totalDuration <= 0 || turnDurationSec <= 0) {
+                if (totalDurationSec <= 0 || turnDurationSec <= 0) {
                     return alert("有効な時間を入力してください");
                 }
         
-                totalSecondsLeft = totalDuration;
+                totalSecondsLeft = totalDurationSec;
                 turnSecondsLeft = turnDurationSec;
                 currentTurnIndex = 0;
                 updateCharacter();
@@ -218,12 +262,14 @@
             document.getElementById('stopBtn').disabled = true;
             document.getElementById('resetBtn').disabled = true;
 
-            document.getElementById('totalCountdown').innerText = "00:00";
-            document.getElementById('turnCountdown').innerText = "00:00";
+            updateFromInput();
+            
+            // プログレスバーのリセット
             document.getElementById('turnProgress').style.width = "0%";
+            document.getElementById('totalProgress').style.width = "0%"; // ここもリセット
             document.getElementById('turnStatus').innerText = "待機中...";
             
-            updateCharacter();
+            updateCharacter(); 
         }
     
         function finishTimer() {
@@ -254,9 +300,16 @@
             document.getElementById('turnCountdown').innerText = 
                 `${String(turnM).padStart(2, '0')}:${String(turnS).padStart(2, '0')}`;
     
+            // 交代バーの更新
             if (turnDurationSec > 0) {
                 const percentage = ((turnDurationSec - turnSecondsLeft) / turnDurationSec) * 100;
                 document.getElementById('turnProgress').style.width = `${percentage}%`;
+            }
+
+            // ▼▼▼ 全体バーの更新処理を追加 ▼▼▼
+            if (totalDurationSec > 0) {
+                const totalPercent = ((totalDurationSec - totalSecondsLeft) / totalDurationSec) * 100;
+                document.getElementById('totalProgress').style.width = `${totalPercent}%`;
             }
         }
     
