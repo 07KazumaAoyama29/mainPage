@@ -45,4 +45,7 @@ urlpatterns = [
     #統計用
     path("summary/", views.weekly_summary, name="weekly_summary"),
     path("summary/monthly/", views.monthly_summary, name="monthly_summary"),
+
+    # 公開用API
+    path("api/public-events/", views.public_calendar_events, name="public_calendar_events"),
 ]
