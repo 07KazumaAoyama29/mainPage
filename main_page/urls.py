@@ -28,4 +28,6 @@ urlpatterns = [
     path('accounts/', include('accounts.urls')),
     #ルーレット
     path('roulette/', include('roulette_app.urls')),
+    #ロボ団タイマー
+    path('robodonetimer/', include('robodone_timer.urls')),
 ]

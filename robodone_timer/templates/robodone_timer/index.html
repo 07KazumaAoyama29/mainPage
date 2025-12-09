@@ -1,0 +1,206 @@
+{% extends 'todo/base.html' %}
+{% load static %}
+{% block content %}
+<div class="container py-5">
+    <h1 class="text-center mb-4">🤖 交代タイマー 🐱</h1>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <form onsubmit="return false;">
+                <div class="row g-3 align-items-center justify-content-center">
+                    
+                    <div class="col-auto">
+                        <label class="col-form-label fw-bold">全体時間</label>
+                    </div>
+                    <div class="col-auto">
+                        <div class="input-group">
+                            <input type="number" id="totalMin" class="form-control" value="60" min="0" style="width: 80px;">
+                            <span class="input-group-text">分</span>
+                            <input type="number" id="totalSec" class="form-control" value="0" min="0" max="59" style="width: 80px;">
+                            <span class="input-group-text">秒</span>
+                        </div>
+                    </div>
+
+                    <div class="w-100 d-md-none"></div>
+
+                    <div class="col-auto ms-md-4">
+                        <label class="col-form-label fw-bold">交代間隔</label>
+                    </div>
+                    <div class="col-auto">
+                        <div class="input-group">
+                            <input type="number" id="turnMin" class="form-control" value="10" min="0" style="width: 80px;">
+                            <span class="input-group-text">分</span>
+                            <input type="number" id="turnSec" class="form-control" value="0" min="0" max="59" style="width: 80px;">
+                            <span class="input-group-text">秒</span>
+                        </div>
+                    </div>
+
+                    <div class="col-auto ms-md-4">
+                        <button class="btn btn-primary px-4" onclick="startTimer()" id="startBtn">スタート</button>
+                        <button class="btn btn-secondary px-4" onclick="resetTimer()" id="resetBtn" disabled>リセット</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <div class="card h-100 text-center" id="charCard" style="background-color: #f8f9fa; transition: background-color 0.5s;">
+                <div class="card-body d-flex flex-column justify-content-center align-items-center" style="min-height: 300px;">
+                    <div id="charIcon" style="font-size: 8rem;">🐭</div>
+                    <h2 class="display-4 fw-bold" id="charName">ねずボット</h2>
+                    <p class="fs-4 text-muted" id="turnStatus">待機中...</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 mb-3">
+            <div class="card h-100">
+                <div class="card-body d-flex flex-column justify-content-center text-center">
+                    
+                    <h5 class="text-muted">全体残り時間</h5>
+                    <div class="display-1 fw-bold mb-4" id="totalCountdown">00:00</div>
+                    
+                    <hr>
+
+                    <h5 class="text-muted">交代まであと</h5>
+                    <div class="display-2 fw-bold text-danger" id="turnCountdown">00:00</div>
+
+                    <div class="progress mt-3" style="height: 25px;">
+                        <div id="turnProgress" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let intervalId = null;
+    let totalSecondsLeft = 0;
+    let turnSecondsLeft = 0;
+    let currentTurnIndex = 0; // 0:ねずボット, 1:ロボにゃん
+    let turnDurationSec = 0;
+
+    const charConfig = [
+        { name: "ねずボット", icon: "🐭", color: "#e3f2fd", class: "bg-info" }, // 薄い青
+        { name: "ロボにゃん", icon: "🐱", color: "#fce4ec", class: "bg-danger" }  // 薄い赤
+    ];
+
+    // 効果音（必要なら）
+    //const switchSound = new Audio('https://actions.google.com/sounds/v1/cartoon/cartoon_boing.ogg');
+    const switchSound = new Audio("{% static 'robodone_timer/sounds/timer.mp3' %}");
+
+    function startTimer() {
+        // 値の取得とバリデーション
+        const totalMin = parseInt(document.getElementById('totalMin').value) || 0;
+        const totalSec = parseInt(document.getElementById('totalSec').value) || 0;
+        const turnMin = parseInt(document.getElementById('turnMin').value) || 0;
+        const turnSec = parseInt(document.getElementById('turnSec').value) || 0;
+
+        // 秒換算
+        const totalDuration = (totalMin * 60) + totalSec;
+        turnDurationSec = (turnMin * 60) + turnSec;
+
+        if (totalDuration <= 0 || turnDurationSec <= 0) {
+            return alert("有効な時間を入力してください");
+        }
+
+        // 初期化
+        totalSecondsLeft = totalDuration;
+        turnSecondsLeft = turnDurationSec;
+        currentTurnIndex = 0;
+
+        // UIロック
+        setInputsDisabled(true);
+        
+        updateDisplay();
+        updateCharacter();
+
+        // タイマー開始
+        intervalId = setInterval(() => {
+            totalSecondsLeft--;
+            turnSecondsLeft--;
+
+            // 交代のタイミング
+            if (turnSecondsLeft <= 0 && totalSecondsLeft > 0) {
+                currentTurnIndex = (currentTurnIndex + 1) % 2; 
+                turnSecondsLeft = turnDurationSec; 
+                switchSound.play().catch(e => {}); // エラー無視
+                updateCharacter();
+            }
+
+            // 終了判定
+            if (totalSecondsLeft <= 0) {
+                finishTimer();
+            }
+
+            updateDisplay();
+        }, 1000);
+    }
+
+    function resetTimer() {
+        clearInterval(intervalId);
+        setInputsDisabled(false);
+        
+        document.getElementById('totalCountdown').innerText = "00:00";
+        document.getElementById('turnCountdown').innerText = "00:00";
+        document.getElementById('turnProgress').style.width = "0%";
+        
+        // 初期状態に戻す
+        document.getElementById('charIcon').innerText = "🐭";
+        document.getElementById('charName').innerText = "ねずボット";
+        document.getElementById('charCard').style.backgroundColor = "#f8f9fa";
+        document.getElementById('turnStatus').innerText = "待機中...";
+    }
+
+    function finishTimer() {
+        clearInterval(intervalId);
+        totalSecondsLeft = 0;
+        turnSecondsLeft = 0;
+        updateDisplay();
+        alert("終了です！お疲れ様でした！");
+        resetTimer();
+    }
+
+    function setInputsDisabled(disabled) {
+        document.getElementById('startBtn').disabled = disabled;
+        document.getElementById('resetBtn').disabled = !disabled;
+        document.getElementById('totalMin').disabled = disabled;
+        document.getElementById('totalSec').disabled = disabled;
+        document.getElementById('turnMin').disabled = disabled;
+        document.getElementById('turnSec').disabled = disabled;
+    }
+
+    function updateDisplay() {
+        // 全体時間
+        const totalM = Math.floor(totalSecondsLeft / 60);
+        const totalS = totalSecondsLeft % 60;
+        document.getElementById('totalCountdown').innerText = 
+            `${String(totalM).padStart(2, '0')}:${String(totalS).padStart(2, '0')}`;
+
+        // 交代時間
+        const turnM = Math.floor(turnSecondsLeft / 60);
+        const turnS = turnSecondsLeft % 60;
+        document.getElementById('turnCountdown').innerText = 
+            `${String(turnM).padStart(2, '0')}:${String(turnS).padStart(2, '0')}`;
+
+        // プログレスバー
+        const percentage = ((turnDurationSec - turnSecondsLeft) / turnDurationSec) * 100;
+        document.getElementById('turnProgress').style.width = `${percentage}%`;
+    }
+
+    function updateCharacter() {
+        const char = charConfig[currentTurnIndex];
+        
+        document.getElementById('charIcon').innerText = char.icon;
+        document.getElementById('charName').innerText = char.name;
+        document.getElementById('charCard').style.backgroundColor = char.color;
+        document.getElementById('turnStatus').innerText = "のターン！";
+        
+        const bar = document.getElementById('turnProgress');
+        bar.className = `progress-bar progress-bar-striped progress-bar-animated ${currentTurnIndex === 0 ? 'bg-info' : 'bg-danger'}`;
+    }
+</script>
+{% endblock %}

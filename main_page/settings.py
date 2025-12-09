@@ -64,6 +64,8 @@ INSTALLED_APPS = [
     'accounts.apps.AccountsConfig',
     #ルーレットアプリ
     'roulette_app',
+    #ロボ団タイマーアプリ
+    'robodone_timer',
 ]
 
 MIDDLEWARE = [
