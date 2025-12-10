@@ -81,6 +81,21 @@
                                 <span class="input-group-text">秒</span>
                             </div>
                         </div>
+
+                        <div class="w-100 d-md-none"></div>
+
+                        <div class="col-auto ms-md-4">
+                            <label class="col-form-label fw-bold">スタート担当</label>
+                        </div>
+                        <div class="col-auto">
+                            <div class="btn-group" role="group" aria-label="スタート担当者選択">
+                                <input type="radio" class="btn-check" name="startChar" id="startNezu" value="0" autocomplete="off" checked onchange="changeStartChar()">
+                                <label class="btn btn-outline-info" for="startNezu">ねずボット</label>
+
+                                <input type="radio" class="btn-check" name="startChar" id="startRobo" value="1" autocomplete="off" onchange="changeStartChar()">
+                                <label class="btn btn-outline-danger" for="startRobo">ロボにゃん</label>
+                            </div>
+                        </div>
     
                         <div class="col-auto ms-md-4">
                             <button class="btn btn-primary px-3" onclick="startTimer()" id="startBtn">スタート</button>
@@ -132,10 +147,10 @@
 
         <div class="d-flex justify-content-center gap-3 mt-5">
             <a href="{% url 'robot_timer:build_timer' %}" class="btn btn-warning btn-lg px-4">
-                ロボット制作へ
+                ⬅️ ロボット制作へ移動
             </a>
             <a href="{% url 'robot_timer:menu' %}" class="btn btn-secondary btn-lg px-4">
-                メニューに戻る
+                メニューに戻る 🏠
             </a>
         </div>
     </div>
@@ -152,12 +167,14 @@
         const charConfig = [
             { 
                 name: "ねずボット", 
+                // ▼▼▼ .png に変更 ▼▼▼
                 icon: `<img src="{% static 'robodone_timer/images/nezubotto.png' %}" class="char-img" alt="ねずボット">`, 
                 color: "#e3f2fd", 
                 class: "bg-info" 
             },
             { 
                 name: "ロボにゃん", 
+                // ▼▼▼ .png に変更 ▼▼▼
                 icon: `<img src="{% static 'robodone_timer/images/robonyan.png' %}" class="char-img" alt="ロボにゃん">`,
                 color: "#fce4ec", 
                 class: "bg-danger" 
@@ -170,6 +187,21 @@
             updateCharacter();
             updateFromInput();
         };
+
+        function getStartingTurnIndex() {
+            const selectedValue = document.querySelector('input[name="startChar"]:checked').value;
+            return parseInt(selectedValue);
+        }
+
+        // ▼▼▼ 新規追加：ラジオボタン変更時に即座に画像を切り替える関数 ▼▼▼
+        function changeStartChar() {
+            // タイマー動作中は勝手に切り替わると困るので無視（念のため）
+            if (intervalId || isPaused) return;
+
+            currentTurnIndex = getStartingTurnIndex();
+            updateCharacter();
+        }
+        // ▲▲▲▲▲▲
 
         function updateFromInput() {
             if (intervalId || isPaused) return;
@@ -203,7 +235,9 @@
         
                 totalSecondsLeft = totalDurationSec;
                 turnSecondsLeft = turnDurationSec;
-                currentTurnIndex = 0;
+                
+                // スタートボタンを押した時にも念のため同期する
+                currentTurnIndex = getStartingTurnIndex();
                 updateCharacter();
             }
     
@@ -253,6 +287,8 @@
             isPaused = false;
             totalSecondsLeft = 0;
             turnSecondsLeft = 0;
+
+            document.getElementById('startNezu').checked = true;
             currentTurnIndex = 0;
 
             setInputsDisabled(false);
@@ -264,9 +300,8 @@
 
             updateFromInput();
             
-            // プログレスバーのリセット
             document.getElementById('turnProgress').style.width = "0%";
-            document.getElementById('totalProgress').style.width = "0%"; // ここもリセット
+            document.getElementById('totalProgress').style.width = "0%";
             document.getElementById('turnStatus').innerText = "待機中...";
             
             updateCharacter(); 
@@ -286,7 +321,12 @@
         }
     
         function setInputsDisabled(disabled) {
-            document.querySelectorAll('input[type="number"]').forEach(input => input.disabled = disabled);
+            document.getElementById('totalMin').disabled = disabled;
+            document.getElementById('totalSec').disabled = disabled;
+            document.getElementById('turnMin').disabled = disabled;
+            document.getElementById('turnSec').disabled = disabled;
+            document.getElementById('startNezu').disabled = disabled;
+            document.getElementById('startRobo').disabled = disabled;
         }
     
         function updateDisplay() {
@@ -300,13 +340,11 @@
             document.getElementById('turnCountdown').innerText = 
                 `${String(turnM).padStart(2, '0')}:${String(turnS).padStart(2, '0')}`;
     
-            // 交代バーの更新
             if (turnDurationSec > 0) {
                 const percentage = ((turnDurationSec - turnSecondsLeft) / turnDurationSec) * 100;
                 document.getElementById('turnProgress').style.width = `${percentage}%`;
             }
 
-            // ▼▼▼ 全体バーの更新処理を追加 ▼▼▼
             if (totalDurationSec > 0) {
                 const totalPercent = ((totalDurationSec - totalSecondsLeft) / totalDurationSec) * 100;
                 document.getElementById('totalProgress').style.width = `${totalPercent}%`;
