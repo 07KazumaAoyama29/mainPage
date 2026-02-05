@@ -37,6 +37,8 @@ else:
     SECRET_KEY = 'django-insecure-your-local-secret-key' # ローカル用の簡単なキー
     DEBUG = True
     ALLOWED_HOSTS = []
+    MEDIA_URL = 'media/'
+    MEDIA_ROOT = BASE_DIR / 'media'
 
     DATABASES = {
         'default': {
@@ -120,11 +122,6 @@ TIME_ZONE = 'Asia/Tokyo'
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-MEDIA_URL = 'media/'
-MEDIA_ROOT = BASE_DIR / 'media'
-
-
-
 # Default primary key field type
 # ... (この部分は変更なし) ...
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
