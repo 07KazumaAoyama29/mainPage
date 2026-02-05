@@ -6,6 +6,8 @@ from .models import ReadingNote
 
 def recommend_list(request):
     notes = ReadingNote.objects.filter(is_public=True)
+    # exclude currently reading
+    notes = notes.exclude(status=ReadingNote.Status.READING)
 
     rating = request.GET.get("rating")
     if rating and rating.isdigit():
@@ -40,3 +42,10 @@ def recommend_list(request):
 def recommend_detail(request, pk):
     note = get_object_or_404(ReadingNote, pk=pk, is_public=True)
     return render(request, "reading_notes/recommend_detail.html", {"note": note})
+
+
+def reading_now_list(request):
+    notes = ReadingNote.objects.filter(is_public=True, status=ReadingNote.Status.READING)
+    notes = notes.order_by("-updated_at")
+    context = {"notes": notes}
+    return render(request, "reading_notes/reading_now_list.html", context)

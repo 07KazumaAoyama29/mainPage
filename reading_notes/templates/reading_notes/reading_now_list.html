@@ -1,0 +1,55 @@
+{% extends 'reading_notes/base.html' %}
+{% load reading_notes %}
+{% block title %}&#x8AAD;&#x66F8;&#x4E2D;&#x306E;&#x672C;{% endblock %}
+
+{% block content %}
+<style>
+    .recommend-cover {
+        width: 120px;
+        height: 160px;
+        object-fit: cover;
+        background: #f8f9fa;
+    }
+</style>
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h3 mb-0">&#x8AAD;&#x66F8;&#x4E2D;&#x306E;&#x672C;</h1>
+    <a class="btn btn-secondary" href="/recommend/">&#x304A;&#x3059;&#x3059;&#x3081;&#x672C;&#x4E00;&#x89A7;</a>
+</div>
+
+<div class="row g-3">
+    {% for note in notes %}
+        <div class="col-md-6 col-lg-3">
+            <div class="card h-100">
+                {% if note.cover_image %}
+                    <img src="{{ note.cover_image.url }}" class="card-img-top recommend-cover" alt="{{ note.title }}">
+                {% endif %}
+                <div class="card-body">
+                    <h5 class="card-title">{{ note.title }}</h5>
+                    <p class="card-text mb-1"><strong>&#x8457;&#x8005;&#x540D;:</strong>
+                        {% if note.author %}
+                            {{ note.author|author_summary }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </p>
+                    <p class="card-text mb-1"><strong>&#x7A2E;&#x985E;:</strong> {{ note.get_category_display|default:"-" }}</p>
+                    <p class="card-text"><strong>&#x4E00;&#x8A00;&#x8981;&#x7D04;:</strong>
+                        {% if note.one_line_summary %}
+                            {{ note.one_line_summary|truncatechars:80 }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </p>
+                </div>
+                <div class="card-footer">
+                    <a href="/recommend/{{ note.pk }}/" class="btn btn-dark w-100">&#x8A73;&#x7D30;&#x3092;&#x898B;&#x308B;</a>
+                </div>
+            </div>
+        </div>
+    {% empty %}
+        <div class="col-12">
+            <p class="text-muted">&#x8AAD;&#x66F8;&#x4E2D;&#x306E;&#x672C;&#x306F;&#x307E;&#x3060;&#x3042;&#x308A;&#x307E;&#x305B;&#x3093;</p>
+        </div>
+    {% endfor %}
+</div>
+{% endblock %}
