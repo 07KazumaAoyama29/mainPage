@@ -1,6 +1,6 @@
 services:
   - type: web        # servicesの下なので、2スペースのインデント
-    name: main-page  # typeと同じ階層なので、同じインデント
+    name: mainPage  # typeと同じ階層なので、同じインデント
     env: python
     buildCommand: |
       pip install -r requirements.txt
