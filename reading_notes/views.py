@@ -11,7 +11,7 @@ AffiliateLinkFormSet = inlineformset_factory(
     AffiliateLink,
     form=AffiliateLinkForm,
     extra=2,
-    can_delete=True,
+    can_delete=False,
 )
 
 
@@ -70,7 +70,12 @@ def note_create(request):
             return redirect("reading_notes:detail", pk=note.pk)
     else:
         form = ReadingNoteForm()
-        formset = AffiliateLinkFormSet()
+        formset = AffiliateLinkFormSet(
+            initial=[
+                {"kind": AffiliateLink.Kind.AMAZON},
+                {"kind": AffiliateLink.Kind.RAKUTEN},
+            ]
+        )
 
     return render(
         request,

@@ -64,12 +64,28 @@ class ReadingNoteForm(forms.ModelForm):
 class AffiliateLinkForm(forms.ModelForm):
     class Meta:
         model = AffiliateLink
-        fields = ["label", "url", "sort_order"]
+        fields = ["kind", "url"]
         widgets = {
-            "sort_order": forms.NumberInput(attrs={"min": 0, "step": 1}),
+            "kind": forms.HiddenInput(),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for name, field in self.fields.items():
-            field.widget.attrs.setdefault("class", "form-control")
+            if name != "kind":
+                field.widget.attrs.setdefault("class", "form-control")
+
+        # make URL label fixed per kind
+        kind = self.initial.get("kind") or getattr(self.instance, "kind", "")
+        if kind == AffiliateLink.Kind.AMAZON:
+            self.fields["url"].label = "Amazonリンク"
+        elif kind == AffiliateLink.Kind.RAKUTEN:
+            self.fields["url"].label = "楽天リンク"
+
+    def clean(self):
+        cleaned = super().clean()
+        kind = cleaned.get("kind")
+        url = cleaned.get("url")
+        if url and not kind:
+            raise forms.ValidationError("リンク種別が不正です。")
+        return cleaned

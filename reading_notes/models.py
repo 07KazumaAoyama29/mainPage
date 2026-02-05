@@ -56,13 +56,27 @@ class ReadingNote(models.Model):
 
 
 class AffiliateLink(models.Model):
+    class Kind(models.TextChoices):
+        AMAZON = "amazon", "Amazon"
+        RAKUTEN = "rakuten", "楽天"
+
     note = models.ForeignKey(ReadingNote, on_delete=models.CASCADE, related_name="affiliate_links")
-    label = models.CharField("ラベル", max_length=100)
+    kind = models.CharField("種類", max_length=20, choices=Kind.choices, default=Kind.AMAZON)
+    label = models.CharField("ラベル", max_length=100, blank=True)
     url = models.URLField("URL", max_length=500)
     sort_order = models.IntegerField("表示順", default=0)
 
+    def save(self, *args, **kwargs):
+        if self.kind == self.Kind.AMAZON:
+            self.label = "Amazon"
+            self.sort_order = 1
+        elif self.kind == self.Kind.RAKUTEN:
+            self.label = "楽天"
+            self.sort_order = 2
+        super().save(*args, **kwargs)
+
     def __str__(self):
-        return f"{self.label}"
+        return self.label or self.get_kind_display()
 
     class Meta:
         ordering = ["sort_order", "id"]
