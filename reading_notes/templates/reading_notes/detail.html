@@ -1,4 +1,5 @@
 {% extends 'reading_notes/base.html' %}
+{% load reading_notes %}
 {% block title %}{{ note.title }}{% endblock %}
 
 {% block content %}
@@ -19,7 +20,13 @@
                         <img src="{{ note.cover_image.url }}" alt="{{ note.title }}" class="img-fluid rounded">
                     </div>
                 {% endif %}
-                <p><strong>&#x8457;&#x8005;&#x540D;:</strong> {{ note.author|default:"-" }}</p>
+                <p><strong>&#x8457;&#x8005;&#x540D;:</strong>
+                    {% if note.author %}
+                        {{ note.author|author_summary }}
+                    {% else %}
+                        -
+                    {% endif %}
+                </p>
                 <p><strong>&#x30DA;&#x30FC;&#x30B8;&#x6570;:</strong> {{ note.page_count|default:"-" }}</p>
                 <p><strong>&#x30B9;&#x30C6;&#x30FC;&#x30BF;&#x30B9;:</strong> {{ note.get_status_display }}</p>
                 <p><strong>&#x7A2E;&#x985E;:</strong> {{ note.get_category_display|default:"-" }}</p>
