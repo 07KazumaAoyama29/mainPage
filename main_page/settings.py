@@ -126,6 +126,8 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 # ... (この部分は変更なし) ...
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+INVITE_CODE = os.environ.get('INVITE_CODE', '')
+
 # ログイン・ログアウト後のリダイレクト先
 LOGIN_REDIRECT_URL = "mainpages:home" # ログイン後は学習ノートのトピック一覧へ
 LOGOUT_REDIRECT_URL = "mainpages:home" # ログアウト後はサイトのトップページへ
