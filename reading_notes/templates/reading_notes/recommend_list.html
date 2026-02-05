@@ -1,0 +1,91 @@
+{% extends 'reading_notes/base.html' %}
+{% block title %}&#x304A;&#x3059;&#x3059;&#x3081;&#x672C;&#x4E00;&#x89A7;{% endblock %}
+
+{% block content %}
+<style>
+    .recommend-cover {
+        width: 120px;
+        height: 180px;
+        object-fit: cover;
+        background: #f8f9fa;
+    }
+    .recommend-top {
+        display: flex;
+        gap: 12px;
+        align-items: flex-start;
+    }
+    .recommend-meta {
+        flex: 1;
+        min-width: 0;
+    }
+</style>
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h3 mb-0">&#x304A;&#x3059;&#x3059;&#x3081;&#x672C;&#x4E00;&#x89A7;</h1>
+</div>
+
+<div class="mb-3 d-flex flex-wrap gap-2">
+    <div class="btn-group" role="group">
+        <a href="/recommend/" class="btn btn-outline-secondary {% if not rating %}active{% endif %}">&#x5168;&#x90E8;</a>
+        {% for r in rating_choices %}
+            <a href="/recommend/?rating={{ r }}{% if category %}&category={{ category }}{% endif %}" class="btn btn-outline-secondary {% if rating == r|stringformat:'s' %}active{% endif %}">&#x2605;{{ r }}</a>
+        {% endfor %}
+    </div>
+    <div class="btn-group" role="group">
+        <a href="/recommend/?{% if rating %}rating={{ rating }}{% endif %}" class="btn btn-outline-secondary {% if not category %}active{% endif %}">&#x5168;&#x90E8;</a>
+        {% for value,label in category_choices %}
+            <a href="/recommend/?{% if rating %}rating={{ rating }}&{% endif %}category={{ value }}" class="btn btn-outline-secondary {% if category == value %}active{% endif %}">{{ label }}</a>
+        {% endfor %}
+    </div>
+</div>
+
+<div class="row g-3">
+    {% for note in notes %}
+        <div class="col-md-6 col-lg-3">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="recommend-top">
+                        <div class="recommend-meta">
+                            <h5 class="card-title">{{ note.title }}</h5>
+                            <p class="card-text mb-1"><strong>&#x8457;&#x8005;&#x540D;:</strong> {{ note.author|default:"-" }}</p>
+                            <p class="card-text mb-1"><strong>&#x7A2E;&#x985E;:</strong> {{ note.get_category_display|default:"-" }}</p>
+                            <p class="card-text mb-1">
+                                <strong>&#x304A;&#x3059;&#x3059;&#x3081;&#x5EA6;:</strong>
+                                {% if note.rating %}
+                                    {% if note.rating == 5 %}<span class="badge bg-warning text-dark">&#x2605;5</span>
+                                    {% elif note.rating == 4 %}<span class="badge bg-success">&#x2605;4</span>
+                                    {% elif note.rating == 3 %}<span class="badge bg-info text-dark">&#x2605;3</span>
+                                    {% elif note.rating == 2 %}<span class="badge bg-secondary">&#x2605;2</span>
+                                    {% elif note.rating == 1 %}<span class="badge bg-dark">&#x2605;1</span>
+                                    {% endif %}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </p>
+                            <p class="card-text mb-1"><strong>&#x8AAD;&#x4E86;&#x65E5;:</strong> {{ note.finished_at|default:"-" }}</p>
+                        </div>
+                        {% if note.cover_image %}
+                            <img src="{{ note.cover_image.url }}" class="recommend-cover rounded" alt="{{ note.title }}">
+                        {% endif %}
+                    </div>
+                    <p class="card-text mt-2"><strong>&#x4E00;&#x8A00;&#x8981;&#x7D04;:</strong> {{ note.one_line_summary|default:"-" }}</p>
+
+                    {% if note.affiliate_links.count %}
+                        <div class="mt-2">
+                            {% for link in note.affiliate_links.all %}
+                                <a class="btn btn-sm btn-outline-primary me-1 mb-1" href="{{ link.url }}" target="_blank" rel="noopener noreferrer">{{ link.label }}</a>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+                <div class="card-footer">
+                    <a href="/recommend/{{ note.pk }}/" class="btn btn-dark w-100">&#x8A73;&#x7D30;&#x3092;&#x898B;&#x308B;</a>
+                </div>
+            </div>
+        </div>
+    {% empty %}
+        <div class="col-12">
+            <p class="text-muted">&#x304A;&#x3059;&#x3059;&#x3081;&#x672C;&#x304C;&#x307E;&#x3060;&#x3042;&#x308A;&#x307E;&#x305B;&#x3093;</p>
+        </div>
+    {% endfor %}
+</div>
+{% endblock %}

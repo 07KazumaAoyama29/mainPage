@@ -1,0 +1,64 @@
+{% extends 'reading_notes/base.html' %}
+{% block title %}&#x8AAD;&#x66F8;&#x30E1;&#x30E2;&#x4E00;&#x89A7;{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h3 mb-0">&#x8AAD;&#x66F8;&#x30E1;&#x30E2;&#x4E00;&#x89A7;</h1>
+    <a class="btn btn-primary" href="{% url 'reading_notes:create' %}">&#x65B0;&#x898F;&#x4F5C;&#x6210;</a>
+</div>
+
+<form class="row g-2 mb-3" method="get">
+    <div class="col-md-5">
+        <input type="text" name="q" class="form-control" placeholder="&#x30BF;&#x30A4;&#x30C8;&#x30EB;/&#x8457;&#x8005;/&#x4E00;&#x8A00;&#x8981;&#x7D04;&#x3067;&#x691C;&#x7D22;" value="{{ q }}">
+    </div>
+    <div class="col-md-3">
+        <select name="sort" class="form-select">
+            <option value="updated" {% if sort == 'updated' %}selected{% endif %}>&#x66F4;&#x65B0;&#x65E5;</option>
+            <option value="finished" {% if sort == 'finished' %}selected{% endif %}>&#x8AAD;&#x4E86;&#x65E5;</option>
+            <option value="rating" {% if sort == 'rating' %}selected{% endif %}>&#x304A;&#x3059;&#x3059;&#x3081;&#x5EA6;</option>
+        </select>
+    </div>
+    <div class="col-md-2">
+        <select name="order" class="form-select">
+            <option value="desc" {% if order == 'desc' %}selected{% endif %}>&#x964D;&#x9806;</option>
+            <option value="asc" {% if order == 'asc' %}selected{% endif %}>&#x6607;&#x9806;</option>
+        </select>
+    </div>
+    <div class="col-md-2">
+        <button class="btn btn-outline-primary w-100" type="submit">&#x691C;&#x7D22;</button>
+    </div>
+</form>
+
+<div class="table-responsive">
+    <table class="table table-striped align-middle">
+        <thead>
+            <tr>
+                <th>&#x30BF;&#x30A4;&#x30C8;&#x30EB;</th>
+                <th>&#x30B9;&#x30C6;&#x30FC;&#x30BF;&#x30B9;</th>
+                <th>&#x304A;&#x3059;&#x3059;&#x3081;&#x5EA6;</th>
+                <th>&#x8AAD;&#x4E86;&#x65E5;</th>
+                <th>&#x66F4;&#x65B0;&#x65E5;</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for note in notes %}
+            <tr>
+                <td><a href="{% url 'reading_notes:detail' note.pk %}">{{ note.title }}</a></td>
+                <td>{{ note.get_status_display }}</td>
+                <td>{% if note.rating %}{{ note.rating }}{% else %}-{% endif %}</td>
+                <td>{% if note.finished_at %}{{ note.finished_at }}{% else %}-{% endif %}</td>
+                <td>{{ note.updated_at|date:"Y-m-d" }}</td>
+                <td class="text-end">
+                    <a class="btn btn-sm btn-outline-secondary" href="{% url 'reading_notes:edit' note.pk %}">&#x7DE8;&#x96C6;</a>
+                </td>
+            </tr>
+        {% empty %}
+            <tr>
+                <td colspan="6" class="text-center text-muted">&#x30E1;&#x30E2;&#x304C;&#x307E;&#x3060;&#x3042;&#x308A;&#x307E;&#x305B;&#x3093;</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

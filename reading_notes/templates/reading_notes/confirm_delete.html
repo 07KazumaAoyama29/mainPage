@@ -1,0 +1,12 @@
+{% extends 'reading_notes/base.html' %}
+{% block title %}&#x524A;&#x9664;&#x78BA;&#x8A8D;{% endblock %}
+
+{% block content %}
+<h1 class="h4">&#x524A;&#x9664;&#x78BA;&#x8A8D;</h1>
+<p>?{{ note.title }}?&#x3092;&#x524A;&#x9664;&#x3057;&#x307E;&#x3059;&#x304B;&#xFF1F;</p>
+<form method="post">
+    {% csrf_token %}
+    <button class="btn btn-danger" type="submit">&#x524A;&#x9664;&#x3059;&#x308B;</button>
+    <a class="btn btn-secondary" href="{% url 'reading_notes:detail' note.pk %}">&#x30AD;&#x30E3;&#x30F3;&#x30BB;&#x30EB;</a>
+</form>
+{% endblock %}

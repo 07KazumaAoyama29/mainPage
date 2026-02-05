@@ -24,7 +24,13 @@
                     <a href="{% url 'learning_logs:knowledge_list' %}" target="_blank" rel="noopener noreferrer" class="btn btn-primary ms-3">Knowledge Base</a>
                 </li>
                 <li class="nav-item">
-                <a href="#" onclick="window.open('https://akamafu.com/schedule/', '_blank', 'width=1500,height=1000'); return false;" class="btn btn-primary ms-3">スケジュール管理</a>
+                    <a href="#" onclick="window.open('https://akamafu.com/schedule/', '_blank', 'width=1500,height=1000'); return false;" class="btn btn-primary ms-3">スケジュール管理</a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'reading_notes:list' %}" class="btn btn-success ms-3">&#x8AAD;&#x66F8;&#x30E1;&#x30E2;</a>
+                </li>
+                <li class="nav-item">
+                    <a href="/recommend/" class="btn btn-warning ms-3">&#x304A;&#x3059;&#x3059;&#x3081;&#x672C;</a>
                 </li>
             </ul>
             <ul class="navbar-nav ms-auto">

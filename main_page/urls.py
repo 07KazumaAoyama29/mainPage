@@ -16,6 +16,8 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from django.conf import settings
+from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -30,4 +32,11 @@ urlpatterns = [
     path('roulette/', include('roulette_app.urls')),
     #ロボ団タイマー
     path('robodonetimer/', include('robodone_timer.urls')),
+    path('reading/', include('reading_notes.urls')),
+    path('recommend/', include('reading_notes.public_urls'))
 ]
+
+
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

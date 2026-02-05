@@ -66,6 +66,7 @@ INSTALLED_APPS = [
     'roulette_app',
     #ロボ団タイマーアプリ
     'robodone_timer',
+    'reading_notes.apps.ReadingNotesConfig',
 ]
 
 MIDDLEWARE = [
@@ -117,6 +118,9 @@ TIME_ZONE = 'Asia/Tokyo'
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+MEDIA_URL = 'media/'
+MEDIA_ROOT = BASE_DIR / 'media'
 
 
 # Default primary key field type

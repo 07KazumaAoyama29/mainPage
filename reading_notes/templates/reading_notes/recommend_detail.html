@@ -1,0 +1,64 @@
+{% extends 'reading_notes/base.html' %}
+{% block title %}{{ note.title }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h3 mb-0">{{ note.title }}</h1>
+    <a class="btn btn-secondary" href="/recommend/">&#x4E00;&#x89A7;&#x306B;&#x623B;&#x308B;</a>
+</div>
+
+<div class="row g-3">
+    <div class="col-md-5">
+        <div class="card">
+            <div class="card-body">
+                {% if note.cover_image %}
+                    <div class="mb-3">
+                        <img src="{{ note.cover_image.url }}" alt="{{ note.title }}" class="img-fluid rounded">
+                    </div>
+                {% endif %}
+                <p><strong>&#x8457;&#x8005;&#x540D;:</strong> {{ note.author|default:"-" }}</p>
+                <p><strong>&#x30DA;&#x30FC;&#x30B8;&#x6570;:</strong> {{ note.page_count|default:"-" }}</p>
+                <p><strong>&#x7A2E;&#x985E;:</strong> {{ note.get_category_display|default:"-" }}</p>
+                <p><strong>&#x304A;&#x3059;&#x3059;&#x3081;&#x5EA6;:</strong>
+                    {% if note.rating %}
+                        {% if note.rating == 5 %}<span class="badge bg-warning text-dark">&#x2605;5</span>
+                        {% elif note.rating == 4 %}<span class="badge bg-success">&#x2605;4</span>
+                        {% elif note.rating == 3 %}<span class="badge bg-info text-dark">&#x2605;3</span>
+                        {% elif note.rating == 2 %}<span class="badge bg-secondary">&#x2605;2</span>
+                        {% elif note.rating == 1 %}<span class="badge bg-dark">&#x2605;1</span>
+                        {% endif %}
+                    {% else %}
+                        -
+                    {% endif %}
+                </p>
+                <p><strong>&#x8AAD;&#x4E86;&#x65E5;:</strong> {{ note.finished_at|default:"-" }}</p>
+                <p><strong>&#x4E00;&#x8A00;&#x8981;&#x7D04;:</strong><br>{{ note.one_line_summary|linebreaksbr|default:"-" }}</p>
+
+                {% if note.affiliate_links.count %}
+                    <div class="mt-3">
+                        <strong>&#x30A2;&#x30D5;&#x30A3;&#x30EA;&#x30A8;&#x30A4;&#x30C8;&#x30EA;&#x30F3;&#x30AF;:</strong>
+                        <ul class="mt-2">
+                            {% for link in note.affiliate_links.all %}
+                                <li><a href="{{ link.url }}" target="_blank" rel="noopener noreferrer">{{ link.label }}</a></li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-md-7">
+        <div class="card">
+            <div class="card-body">
+                <p><strong>&#x8AAD;&#x66F8;&#x4E2D;&#x306E;&#x611F;&#x60F3;:</strong><br>{{ note.impression_during|linebreaksbr|default:"-" }}</p>
+                <p><strong>&#x8AAD;&#x4E86;&#x5F8C;&#x306E;&#x611F;&#x60F3;:</strong><br>{{ note.impression_after|linebreaksbr|default:"-" }}</p>
+                <p><strong>&#x4ED6;&#x4F5C;&#x54C1;&#x3068;&#x6BD4;&#x3079;&#x305F;&#x611F;&#x60F3;:</strong><br>{{ note.comparison_notes|linebreaksbr|default:"-" }}</p>
+                <p><strong>&#x4F5C;&#x54C1;&#x306E;&#x30C6;&#x30FC;&#x30DE;&#x306B;&#x3064;&#x3044;&#x3066;&#x306E;&#x611F;&#x60F3;:</strong><br>{{ note.theme_notes|linebreaksbr|default:"-" }}</p>
+                <p><strong>&#x66F8;&#x304B;&#x308C;&#x3066;&#x3044;&#x306A;&#x3044;&#x3082;&#x306E;&#x306B;&#x3064;&#x3044;&#x3066;&#x306E;&#x611F;&#x60F3;:</strong><br>{{ note.unwritten_notes|linebreaksbr|default:"-" }}</p>
+                <p><strong>&#x6642;&#x4EE3;&#x306E;&#x5171;&#x901A;&#x70B9;&#x3068;&#x3057;&#x3066;&#x306E;&#x611F;&#x60F3;:</strong><br>{{ note.era_common_notes|linebreaksbr|default:"-" }}</p>
+                <p><strong>&#x666E;&#x904D;&#x7684;&#x306A;&#x30C6;&#x30FC;&#x30DE;&#x3068;&#x3057;&#x3066;&#x306E;&#x611F;&#x60F3;:</strong><br>{{ note.universal_theme_notes|linebreaksbr|default:"-" }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
