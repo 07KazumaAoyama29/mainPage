@@ -10,3 +10,7 @@ services:
     envVars:
       - key: SECRET_KEY     # envVarsの下なので、さらに2スペース（合計4）
         generateValue: true # keyの下なので、さらに2スペース（合計6）
+    disk:
+      name: media
+      mountPath: /var/data
+      sizeGB: 1

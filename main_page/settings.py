@@ -29,6 +29,8 @@ if IS_PRODUCTION:
     
     STATIC_ROOT = BASE_DIR / 'staticfiles'
     STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+    MEDIA_URL = 'media/'
+    MEDIA_ROOT = '/var/data/media'
 
 else:
     # --- 開発環境 (あなたのPC) の設定 ---
@@ -118,9 +120,9 @@ TIME_ZONE = 'Asia/Tokyo'
 STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-
 MEDIA_URL = 'media/'
 MEDIA_ROOT = BASE_DIR / 'media'
+
 
 
 # Default primary key field type
@@ -130,3 +132,4 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # ログイン・ログアウト後のリダイレクト先
 LOGIN_REDIRECT_URL = "mainpages:home" # ログイン後は学習ノートのトピック一覧へ
 LOGOUT_REDIRECT_URL = "mainpages:home" # ログアウト後はサイトのトップページへ
+
