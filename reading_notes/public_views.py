@@ -1,3 +1,4 @@
+from django.core.paginator import Paginator
 from django.shortcuts import render, get_object_or_404
 
 from .models import ReadingNote
@@ -16,8 +17,13 @@ def recommend_list(request):
 
     notes = notes.order_by("-rating", "-finished_at", "-updated_at")
 
+    paginator = Paginator(notes, 10)
+    page_number = request.GET.get("page")
+    page_obj = paginator.get_page(page_number)
+
     context = {
-        "notes": notes,
+        "notes": page_obj,
+        "page_obj": page_obj,
         "rating": rating or "",
         "category": category or "",
         "rating_choices": [5, 4, 3, 2, 1],

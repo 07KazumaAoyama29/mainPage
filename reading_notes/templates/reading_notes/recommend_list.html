@@ -39,8 +39,8 @@
 </div>
 
 <div class="row g-3">
-    {% for note in notes %}
-        <div class="col-md-6 col-lg-3">
+        {% for note in notes %}
+            <div class="col-md-6 col-lg-3">
             <div class="card h-100">
                 <div class="card-body">
                     <div class="recommend-top">
@@ -82,10 +82,34 @@
                 </div>
             </div>
         </div>
-    {% empty %}
-        <div class="col-12">
-            <p class="text-muted">&#x304A;&#x3059;&#x3059;&#x3081;&#x672C;&#x304C;&#x307E;&#x3060;&#x3042;&#x308A;&#x307E;&#x305B;&#x3093;</p>
-        </div>
-    {% endfor %}
+        {% empty %}
+            <div class="col-12">
+                <p class="text-muted">&#x304A;&#x3059;&#x3059;&#x3081;&#x672C;&#x304C;&#x307E;&#x3060;&#x3042;&#x308A;&#x307E;&#x305B;&#x3093;</p>
+            </div>
+        {% endfor %}
 </div>
+
+{% if page_obj and page_obj.paginator.num_pages > 1 %}
+    <nav class="mt-4" aria-label="recommend pagination">
+        <ul class="pagination">
+            {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="/recommend/?{% if rating %}rating={{ rating }}&{% endif %}{% if category %}category={{ category }}&{% endif %}page={{ page_obj.previous_page_number }}">&#x524D;&#x3078;</a>
+                </li>
+            {% else %}
+                <li class="page-item disabled"><span class="page-link">&#x524D;&#x3078;</span></li>
+            {% endif %}
+
+            <li class="page-item disabled"><span class="page-link">{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span></li>
+
+            {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="/recommend/?{% if rating %}rating={{ rating }}&{% endif %}{% if category %}category={{ category }}&{% endif %}page={{ page_obj.next_page_number }}">&#x6B21;&#x3078;</a>
+                </li>
+            {% else %}
+                <li class="page-item disabled"><span class="page-link">&#x6B21;&#x3078;</span></li>
+            {% endif %}
+        </ul>
+    </nav>
+{% endif %}
 {% endblock %}
