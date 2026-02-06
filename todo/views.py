@@ -647,15 +647,15 @@ def monthly_summary(request):
 
 def public_calendar_events(request):
     """
-    ???????????????????
-    - ???????????????
+    公開用カレンダーのイベントデータを返す
+    - 内容は伏せて「予定あり」で統一
     """
     target_user_id = 1
     schedules = Schedule.objects.filter(owner_id=target_user_id).select_related('action_category', 'action_item')
 
     events = []
     for schedule in schedules:
-        title_text = "????"
+        title_text = "予定あり"
         bg_color = "#6c757d"
 
         events.append({
