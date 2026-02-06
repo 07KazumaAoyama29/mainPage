@@ -19,6 +19,10 @@ AffiliateLinkFormSet = inlineformset_factory(
 def note_list(request):
     notes = ReadingNote.objects.filter(owner=request.user)
 
+    status = (request.GET.get("status") or "reading").strip()
+    if status and status != "all":
+        notes = notes.filter(status=status)
+
     q = (request.GET.get("q") or "").strip()
     if q:
         notes = notes.filter(
@@ -46,6 +50,7 @@ def note_list(request):
         "q": q,
         "sort": sort,
         "order": order,
+        "status": status,
     }
     return render(request, "reading_notes/list.html", context)
 

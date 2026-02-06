@@ -8,8 +8,16 @@
 </div>
 
 <form class="row g-2 mb-3" method="get">
-    <div class="col-md-5">
+    <div class="col-md-4">
         <input type="text" name="q" class="form-control" placeholder="&#x30BF;&#x30A4;&#x30C8;&#x30EB;/&#x8457;&#x8005;/&#x4E00;&#x8A00;&#x8981;&#x7D04;&#x3067;&#x691C;&#x7D22;" value="{{ q }}">
+    </div>
+    <div class="col-md-2">
+        <select name="status" class="form-select">
+            <option value="reading" {% if status == 'reading' %}selected{% endif %}>&#x8AAD;&#x66F8;&#x4E2D;</option>
+            <option value="unread" {% if status == 'unread' %}selected{% endif %}>&#x672A;&#x8AAD;</option>
+            <option value="finished" {% if status == 'finished' %}selected{% endif %}>&#x8AAD;&#x4E86;</option>
+            <option value="all" {% if status == 'all' %}selected{% endif %}>&#x3059;&#x3079;&#x3066;</option>
+        </select>
     </div>
     <div class="col-md-3">
         <select name="sort" class="form-select">
@@ -18,7 +26,7 @@
             <option value="rating" {% if sort == 'rating' %}selected{% endif %}>&#x304A;&#x3059;&#x3059;&#x3081;&#x5EA6;</option>
         </select>
     </div>
-    <div class="col-md-2">
+    <div class="col-md-1">
         <select name="order" class="form-select">
             <option value="desc" {% if order == 'desc' %}selected{% endif %}>&#x964D;&#x9806;</option>
             <option value="asc" {% if order == 'asc' %}selected{% endif %}>&#x6607;&#x9806;</option>
