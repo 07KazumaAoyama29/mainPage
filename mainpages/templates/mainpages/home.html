@@ -21,15 +21,6 @@
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                 <li class="nav-item">
-                    <a href="{% url 'learning_logs:knowledge_list' %}" target="_blank" rel="noopener noreferrer" class="btn btn-primary ms-3">Knowledge Base</a>
-                </li>
-                <li class="nav-item">
-                    <a href="#" onclick="window.open('https://akamafu.com/schedule/', '_blank', 'width=1500,height=1000'); return false;" class="btn btn-primary ms-3">スケジュール管理</a>
-                </li>
-                <li class="nav-item">
-                    <a href="{% url 'reading_notes:list' %}" class="btn btn-success ms-3">&#x8AAD;&#x66F8;&#x30E1;&#x30E2;</a>
-                </li>
-                <li class="nav-item">
                     <a href="/recommend/" class="btn btn-warning ms-3">&#x304A;&#x3059;&#x3059;&#x3081;&#x672C;</a>
                 </li>
             </ul>
@@ -64,58 +55,8 @@
         </div>
         </section>
 
-        <section id="schedule" class="py-5">
-            <div class="container">
-                <h2 class="text-center mb-5 border-bottom pb-2">My Schedule</h2>
-                <div class="row">
-                    <div class="col-md-10 mx-auto">
-                        <div class="card shadow-sm">
-                            <div class="card-body">
-                                <div id='public-calendar'></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-        </section>
-
-        <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.14/index.global.min.js'></script>
-        <script>
-          document.addEventListener('DOMContentLoaded', function() {
-            var calendarEl = document.getElementById('public-calendar');
-            var calendar = new FullCalendar.Calendar(calendarEl, {
-              initialView: 'timeGridWeek',
-              headerToolbar: {
-                left: 'prev,next today',
-                center: 'title',
-                right: 'dayGridMonth,timeGridWeek' // スマホで見やすいように切り替えボタンをシンプルに
-              },
-              locale: 'ja',
-              nowIndicator: true,
-              
-              // 公開用APIからデータを取得
-              events: '/schedule/api/public-events/', 
-              
-              // 編集・操作を禁止
-              editable: false,
-              selectable: false,
-              eventClick: function(info) {
-                  info.jsEvent.preventDefault(); 
-              },
-              
-              // 見た目の調整
-              slotMinTime: '08:00:00',
-              slotMaxTime: '24:00:00',
-              height: 'auto',
-              allDaySlot: true,
-              expandRows: true,
-              // スマホ対応: 画面幅が狭いときはヘッダーを簡略化するなどの工夫も可能ですが、
-              // FullCalendarはデフォルトでもレスポンシブに動きます。
-            });
-            calendar.render();
-          });
-        </script>
+        
+        
 
         <section id="affiliation" class="py-5">
     <div class="container">
@@ -249,6 +190,22 @@
                     <div class="card-footer">
                         <a href="https://github.com/07KazumaAoyama29/LearningNote" class="btn btn-dark w-100" target="_blank"><i class="bi bi-github me-2"></i>LearningNote</a>
                 </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="card h-100">
+                    <div class="card-body d-flex flex-column">
+                        <h5 class="card-title">読書メモアプリ</h5>
+                        <p class="card-text">読書の感想や学びを整理し、後から振り返りやすく残せる読書メモアプリ。おすすめ本の紹介ページも自動で作成できます。</p>
+                        <div class="mt-auto">
+                            <span class="badge bg-info">Python</span>
+                            <span class="badge bg-primary">Django</span>
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <a href="https://akamafu.com/recommend/" class="btn btn-info w-100" target="_blank">これまでに読んだ本一覧</a>
+                    </div>
                 </div>
             </div>
 

@@ -647,29 +647,16 @@ def monthly_summary(request):
 
 def public_calendar_events(request):
     """
-    ホームページ用の公開イベントデータを返すビュー
-    ※ ログイン不要、編集不可、特定のユーザーのデータのみ返す
+    ???????????????????
+    - ???????????????
     """
-    # 1. 公開したいユーザーを指定（ID=1 があなただと仮定）
-    # もしユーザー名で指定したい場合は: target_user = get_object_or_404(User, username='your_username')
-    target_user_id = 1 
-    
-    # 2. そのユーザーのスケジュールを取得
-    # select_relatedで必要なデータを効率的に取得
+    target_user_id = 1
     schedules = Schedule.objects.filter(owner_id=target_user_id).select_related('action_category', 'action_item')
-    
+
     events = []
     for schedule in schedules:
-        # タイトル生成（既存のcalendar_eventsと同じロジック）
-        title_text = "未分類"
+        title_text = "????"
         bg_color = "#6c757d"
-        
-        if schedule.action_category:
-            title_text = schedule.action_category.name
-            bg_color = schedule.action_category.color
-        
-        if schedule.action_item:
-            title_text += f": {schedule.action_item.title}"
 
         events.append({
             'title': title_text,
@@ -677,7 +664,6 @@ def public_calendar_events(request):
             'end': schedule.end_time.isoformat(),
             'backgroundColor': bg_color,
             'borderColor': bg_color,
-            # ★重要: url や id は渡さない（詳細画面へのリンクや編集を防ぐため）
         })
-        
+
     return JsonResponse(events, safe=False)
