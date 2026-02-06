@@ -14,8 +14,8 @@
     <a class="btn btn-secondary" href="{% url 'todo:category_list' %}">&#12459;&#12486;&#12468;&#12522;&#31649;&#29702;</a>
     <a class="btn btn-info" href="{% url 'todo:weekly_summary' %}">&#36913;&#38291;&#12469;&#12510;&#12522;&#12540;</a>
     <a class="btn btn-success" href="{% url 'todo:monthly_summary' %}">&#26376;&#38291;&#12469;&#12510;&#12522;&#12540;</a>
-    <a class="btn btn-outline-primary" href="{% url 'todo:today_tasks_setup' %}">&#20170;&#26085;&#12398;&#35373;&#23450;</a>
-    <a class="btn btn-outline-primary" href="{% url 'todo:today_dashboard' %}">&#20170;&#26085;&#12398;Todo</a>
+    <a class="btn btn-outline-primary" href="{% url 'todo:today_tasks_setup' %}" data-popup="true">&#20170;&#26085;&#12398;&#35373;&#23450;</a>
+    <a class="btn btn-outline-primary" href="{% url 'todo:today_dashboard' %}" data-popup="true">&#20170;&#26085;&#12398;Todo</a>
   </div>
   {% endif %}
 {% endblock header %}
@@ -136,6 +136,22 @@
           source: form
         });
       }
+    });
+  });
+</script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('a[data-popup="true"]').forEach(function(link) {
+      link.addEventListener('click', function(event) {
+        event.preventDefault();
+        const url = link.getAttribute('href');
+        window.open(
+          url,
+          '_blank',
+          'width=1100,height=800,menubar=0,toolbar=0,location=0,status=0,scrollbars=1,resizable=1'
+        );
+      });
     });
   });
 </script>

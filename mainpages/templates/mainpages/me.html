@@ -28,7 +28,7 @@
             <a href="{% url 'learning_logs:knowledge_list' %}" class="btn btn-primary w-100">Knowledge Base</a>
         </div>
         <div class="col-md-4">
-            <a href="https://akamafu.com/schedule/" class="btn btn-primary w-100" target="_blank" rel="noopener noreferrer">スケジュール管理</a>
+            <a href="https://akamafu.com/schedule/" class="btn btn-primary w-100" data-popup="true">&#12473;&#12465;&#12472;&#12517;&#12540;&#12523;&#31649;&#29702;</a>
         </div>
         <div class="col-md-4">
             <a href="{% url 'reading_notes:list' %}" class="btn btn-success w-100">読書メモ</a>
@@ -76,5 +76,21 @@
 </script>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('a[data-popup="true"]').forEach(function(link) {
+      link.addEventListener('click', function(event) {
+        event.preventDefault();
+        const url = link.getAttribute('href');
+        window.open(
+          url,
+          '_blank',
+          'width=1100,height=800,menubar=0,toolbar=0,location=0,status=0,scrollbars=1,resizable=1'
+        );
+      });
+    });
+  });
+</script>
 </body>
 </html>
