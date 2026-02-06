@@ -2,19 +2,24 @@
 
 {% block header %}
   {% if user.is_authenticated %}
-  <button class="btn btn-primary mb-3"
-          hx-get="{% url 'todo:create_form' %}"
-          hx-target="#modal-content"
-          data-bs-toggle="modal"
-          data-bs-target="#modal">
-    新しいスケジュールを作成
-  </button>
-  <a class="btn btn-secondary mb-3" href="{% url 'todo:action_item_list' %}">やることリスト</a>
-  <a class="btn btn-secondary mb-3 ms-1" href="{% url 'todo:category_list' %}">カテゴリ管理</a>
-  <a class="btn btn-info mb-3 ms-1" href="{% url 'todo:weekly_summary' %}">週間サマリー</a>
-  <a class="btn btn-success mb-3 ms-1" href="{% url 'todo:monthly_summary' %}">月間サマリー</a>
-    {% endif %}
+  <div class="d-flex flex-wrap gap-2 mb-3">
+    <button class="btn btn-primary"
+            hx-get="{% url 'todo:create_form' %}"
+            hx-target="#modal-content"
+            data-bs-toggle="modal"
+            data-bs-target="#modal">
+      &#12473;&#12465;&#12472;&#12517;&#12540;&#12523;&#20316;&#25104;
+    </button>
+    <a class="btn btn-secondary" href="{% url 'todo:action_item_list' %}">Todoリスト</a>
+    <a class="btn btn-secondary" href="{% url 'todo:category_list' %}">&#12459;&#12486;&#12468;&#12522;&#31649;&#29702;</a>
+    <a class="btn btn-info" href="{% url 'todo:weekly_summary' %}">&#36913;&#38291;&#12469;&#12510;&#12522;&#12540;</a>
+    <a class="btn btn-success" href="{% url 'todo:monthly_summary' %}">&#26376;&#38291;&#12469;&#12510;&#12522;&#12540;</a>
+    <a class="btn btn-outline-primary" href="{% url 'todo:today_tasks_setup' %}">&#20170;&#26085;&#12398;&#35373;&#23450;</a>
+    <a class="btn btn-outline-primary" href="{% url 'todo:today_dashboard' %}">&#20170;&#26085;&#12398;Todo</a>
+  </div>
+  {% endif %}
 {% endblock header %}
+
 
 {% block content %}
 <div id='calendar'></div>

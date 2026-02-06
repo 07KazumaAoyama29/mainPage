@@ -29,6 +29,16 @@ class ActionItem(models.Model):
     def __str__(self):
         return self.title
 
+
+class PeriodicTask(models.Model):
+    title = models.CharField(max_length=200)
+    interval_days = models.PositiveIntegerField(default=7)
+    last_done = models.DateField(null=True, blank=True)
+    owner = models.ForeignKey(User, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.title
+
 # --- 2. 既存の「スケジュール」モデルの変更 ---
 class Schedule(models.Model):
     action_category = models.ForeignKey(
@@ -51,6 +61,7 @@ class Schedule(models.Model):
 
     # ↓ Scheduleモデル自体が持っていた詳細情報はActionItemに移動したので削除
     # task_type, description, text1, text2, text3, text4, int1 を削除
+    title_override = models.CharField("Title override", max_length=200, blank=True)
     start_page = models.IntegerField("開始ページ", null=True, blank=True)
     end_page = models.IntegerField("終了ページ", null=True, blank=True)
 

@@ -11,7 +11,7 @@
 </div>
 
 {# --- 新規タスク作成フォーム --- #}
-<form method="post" action="{% url 'todo:schedule_detail' pk=schedule.pk %}" class="mb-4" id="add-task-form">
+<form method="post" action="{{ task_form_action }}" class="mb-4" id="add-task-form">
   {% csrf_token %}
   <div class="input-group">
     {{ form.title }}

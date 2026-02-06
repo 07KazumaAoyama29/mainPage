@@ -1,0 +1,233 @@
+{% extends 'todo/base.html' %}
+
+{% block header %}
+  <h2 class="mb-3">&#20170;&#26085;&#12398;Todo</h2>
+  <div class="d-flex flex-wrap gap-2">
+    <a class="btn btn-outline-primary" href="{% url 'todo:today_tasks_setup' %}">&#20170;&#26085;&#12398;Todo&#35373;&#23450;</a>
+    <a class="btn btn-outline-secondary" href="{% url 'todo:calendar' %}">&#12473;&#12465;&#12472;&#12517;&#12540;&#12523;</a>
+  </div>
+{% endblock header %}
+
+{% block content %}
+  <section class="mb-4">
+    <div class="card" id="pomodoro-panel">
+      <div class="card-body">
+        <div class="text-center mb-3">
+          <div class="display-3 fw-bold" id="pomodoroDisplay">25:00</div>
+        </div>
+        <div class="row g-2 align-items-end">
+          <div class="col-md-4">
+            <label class="form-label">&#20316;&#26989;&#20869;&#23481;</label>
+            <input type="text" id="pomodoroTitle" class="form-control" placeholder="&#20363;: &#35501;&#26360;">
+          </div>
+          <div class="col-md-2">
+            <label class="form-label">&#20316;&#26989;(&#20998;)</label>
+            <input type="number" id="pomodoroWork" class="form-control" value="25" min="1">
+          </div>
+          <div class="col-md-2">
+            <label class="form-label">&#20241;&#25048;(&#20998;)</label>
+            <input type="number" id="pomodoroBreak" class="form-control" value="5" min="1">
+          </div>
+          <div class="col-md-4">
+            <div class="d-flex gap-2 align-items-center">
+              <button class="btn btn-danger" id="pomodoroStart">Pomodoro&#38283;&#22987;</button>
+              <button class="btn btn-outline-secondary" id="pomodoroStop" disabled>&#20572;&#27490;</button>
+            </div>
+          </div>
+        </div>
+        <input type="hidden" id="pomodoroCsrf" value="{{ csrf_token }}">
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="card">
+      <div class="card-body">
+        <h5 class="mb-3">&#20170;&#26085;&#12398;&#12479;&#12473;&#12463;</h5>
+        {% if total_tasks > 0 %}
+          <div class="mb-3">
+            <div class="progress">
+              <div class="progress-bar" role="progressbar" style="width: {{ progress_percentage }}%;" aria-valuenow="{{ progress_percentage }}" aria-valuemin="0" aria-valuemax="100">
+                {{ progress_percentage|floatformat:0 }}%
+              </div>
+            </div>
+            <div class="small text-muted mt-1">{{ completed_tasks }} / {{ total_tasks }} &#23436;&#20102;</div>
+          </div>
+          <ul class="list-group">
+            {% for task in tasks %}
+              <li class="list-group-item d-flex justify-content-between align-items-center">
+                <span class="{% if task.completed %}text-muted text-decoration-line-through{% endif %}">{{ task.title }}</span>
+                {% if task.completed %}
+                  <span class="badge bg-success">&#23436;&#20102;</span>
+                {% else %}
+                  <span class="badge bg-secondary">Todo</span>
+                {% endif %}
+              </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <div class="text-muted small">&#12414;&#12384;&#12479;&#12473;&#12463;&#12364;&#12354;&#12426;&#12414;&#12379;&#12435;&#12290;</div>
+        {% endif %}
+      </div>
+    </div>
+  </section>
+
+  <section class="mb-4">
+    <div class="card">
+      <div class="card-body">
+        <h5 class="mb-3">&#23450;&#26399;&#12479;&#12473;&#12463;</h5>
+        {% if periodic_tasks %}
+          <div class="list-group">
+            {% for item in periodic_tasks %}
+              <div class="list-group-item d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <div>
+                  <div class="fw-bold {% if item.is_overdue %}text-danger{% endif %}">{{ item.title }}</div>
+                  <div class="small {% if item.is_overdue %}text-danger{% else %}text-muted{% endif %}">
+                    &#38291;&#38548;: {{ item.interval_days }}&#26085;
+                    / &#21069;&#22238;: {% if item.last_done %}{{ item.last_done }}{% else %}&#26410;&#23455;&#26045;{% endif %}
+                    / &#32076;&#36942;: {{ item.days_display }}
+                  </div>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                  {% if item.is_overdue %}
+                    <span class="badge bg-danger">&#36229;&#36942;</span>
+                  {% else %}
+                    <span class="badge bg-success">OK</span>
+                  {% endif %}
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="text-muted small">&#12414;&#12384;&#23450;&#26399;&#12479;&#12473;&#12463;&#12364;&#12354;&#12426;&#12414;&#12379;&#12435;&#12290;</div>
+        {% endif %}
+      </div>
+    </div>
+  </section>
+{% endblock content %}
+
+{% block extra_js %}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const pomodoroStartBtn = document.getElementById('pomodoroStart');
+    const pomodoroStopBtn = document.getElementById('pomodoroStop');
+    const pomodoroTitleInput = document.getElementById('pomodoroTitle');
+    const pomodoroWorkInput = document.getElementById('pomodoroWork');
+    const pomodoroBreakInput = document.getElementById('pomodoroBreak');
+    const pomodoroDisplay = document.getElementById('pomodoroDisplay');
+    const pomodoroCsrf = document.getElementById('pomodoroCsrf');
+
+    let pomodoroTimerId = null;
+    let pomodoroRemainingSec = 0;
+    let pomodoroIsBreak = false;
+
+    function pomodoroFormatTime(totalSeconds) {
+      const minutes = Math.floor(totalSeconds / 60);
+      const seconds = totalSeconds % 60;
+      return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+    }
+
+    function pomodoroSetDisplay() {
+      pomodoroDisplay.textContent = pomodoroFormatTime(Math.max(pomodoroRemainingSec, 0));
+    }
+
+    function pomodoroBeep() {
+      try {
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        oscillator.type = 'sine';
+        oscillator.frequency.value = 880;
+        gainNode.gain.value = 0.08;
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        oscillator.start();
+        setTimeout(() => {
+          oscillator.stop();
+          audioContext.close();
+        }, 300);
+      } catch (error) {
+        console.warn('Audio not available:', error);
+      }
+    }
+
+    function pomodoroStopTimer(resetToWork) {
+      if (pomodoroTimerId) {
+        clearInterval(pomodoroTimerId);
+        pomodoroTimerId = null;
+      }
+      pomodoroIsBreak = false;
+      pomodoroStopBtn.disabled = true;
+      pomodoroStartBtn.disabled = false;
+      if (resetToWork) {
+        const workMinutes = parseInt(pomodoroWorkInput.value, 10) || 25;
+        pomodoroRemainingSec = workMinutes * 60;
+        pomodoroSetDisplay();
+      }
+    }
+
+    if (pomodoroStartBtn) {
+      pomodoroStartBtn.addEventListener('click', async function() {
+        if (pomodoroTimerId) {
+          return;
+        }
+        const workMinutes = parseInt(pomodoroWorkInput.value, 10);
+        const breakMinutes = parseInt(pomodoroBreakInput.value, 10);
+        if (!workMinutes || workMinutes < 1 || !breakMinutes || breakMinutes < 1) {
+          alert('&#20316;&#26989;&#12392;&#20241;&#25048;&#12399;1&#20998;&#20197;&#19978;&#12391;&#20837;&#21147;&#12375;&#12390;&#12367;&#12384;&#12373;&#12356;&#12290;');
+          return;
+        }
+
+        const title = (pomodoroTitleInput.value || '').trim();
+        pomodoroRemainingSec = workMinutes * 60;
+        pomodoroIsBreak = false;
+        pomodoroSetDisplay();
+
+        pomodoroStartBtn.disabled = true;
+        pomodoroStopBtn.disabled = false;
+
+        try {
+          await fetch('{% url "todo:pomodoro_start" %}', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRFToken': pomodoroCsrf ? pomodoroCsrf.value : ''
+            },
+            body: JSON.stringify({
+              title: title,
+              work_minutes: workMinutes,
+              break_minutes: breakMinutes
+            })
+          });
+        } catch (error) {
+          console.error('Pomodoro start failed:', error);
+        }
+
+        pomodoroTimerId = setInterval(function() {
+          pomodoroRemainingSec -= 1;
+          if (pomodoroRemainingSec <= 0) {
+            if (!pomodoroIsBreak) {
+              pomodoroIsBreak = true;
+              pomodoroRemainingSec = breakMinutes * 60;
+              pomodoroBeep();
+              alert('&#20241;&#25048;&#38283;&#22987;');
+            } else {
+              pomodoroStopTimer(false);
+              pomodoroBeep();
+              alert('&#20241;&#25048;&#32066;&#20102;');
+              return;
+            }
+          }
+          pomodoroSetDisplay();
+        }, 1000);
+      });
+    }
+
+    if (pomodoroStopBtn) {
+      pomodoroStopBtn.addEventListener('click', function() {
+        pomodoroStopTimer(true);
+      });
+    }
+  });
+</script>
+{% endblock extra_js %}

@@ -9,16 +9,122 @@ from django.utils import timezone
 
 from datetime import datetime, timedelta, date
 
-from .models import Schedule, Task, ActionItem, ActionCategory
+from .models import Schedule, Task, ActionItem, ActionCategory, PeriodicTask
 from .forms import ScheduleForm, TaskForm, ActionItemForm, ActionCategoryForm
 
 import json
 import calendar
 
+
+def _build_periodic_task_items(user):
+    today = date.today()
+    periodic_tasks = PeriodicTask.objects.filter(owner=user).order_by('id')
+    items = []
+    for task in periodic_tasks:
+        if task.last_done:
+            days_since = (today - task.last_done).days
+            days_display = f"{days_since}日"
+        else:
+            days_since = None
+            days_display = "未実施"
+        is_overdue = (days_since is None) or (days_since > task.interval_days)
+        items.append({
+            'id': task.id,
+            'title': task.title,
+            'interval_days': task.interval_days,
+            'last_done': task.last_done,
+            'days_display': days_display,
+            'is_overdue': is_overdue,
+            'days_since': days_since,
+        })
+
+    items.sort(key=lambda item: (
+        not item['is_overdue'],
+        -(item['days_since'] or 0),
+        item['title'].lower()
+    ))
+    return items
+
+
+def _get_or_create_today_schedule(user):
+    today = timezone.localdate()
+    today_title = "\u4eca\u65e5\u306e\u30bf\u30b9\u30af"
+    schedule = Schedule.objects.filter(
+        owner=user,
+        title_override=today_title,
+        start_time__date=today
+    ).first()
+    if schedule:
+        return schedule
+
+    start_time = timezone.make_aware(datetime.combine(today, datetime.min.time()))
+    end_time = timezone.make_aware(datetime.combine(today, datetime.max.time()))
+    return Schedule.objects.create(
+        owner=user,
+        title_override=today_title,
+        start_time=start_time,
+        end_time=end_time,
+    )
+
 @login_required
 def calendar_view(request):
-    """カレンダーページ本体を表示するビュー"""
+    """カレンダーページ"""
     return render(request, "todo/calendar.html")
+
+
+@login_required
+def today_tasks_setup(request):
+    schedule = _get_or_create_today_schedule(request.user)
+
+    if request.method == 'POST':
+        form = TaskForm(data=request.POST)
+        if form.is_valid():
+            new_task = form.save(commit=False)
+            new_task.owner = request.user
+            new_task.schedule = schedule
+            new_task.save()
+            return redirect('todo:today_tasks_setup')
+
+    tasks = schedule.tasks.order_by('completed', 'position')
+    total_tasks = tasks.count()
+    completed_tasks = tasks.filter(completed=True).count()
+    if total_tasks > 0:
+        progress_percentage = (completed_tasks / total_tasks) * 100
+    else:
+        progress_percentage = 100
+
+    context = {
+        'schedule': schedule,
+        'tasks': tasks,
+        'progress_percentage': progress_percentage,
+        'completed_tasks': completed_tasks,
+        'total_tasks': total_tasks,
+        'form': TaskForm(),
+        'task_form_action': reverse('todo:today_tasks_setup'),
+        'periodic_tasks': _build_periodic_task_items(request.user),
+    }
+    return render(request, 'todo/today_setup.html', context)
+
+
+@login_required
+def today_dashboard(request):
+    schedule = _get_or_create_today_schedule(request.user)
+    tasks = schedule.tasks.order_by('completed', 'position')
+    total_tasks = tasks.count()
+    completed_tasks = tasks.filter(completed=True).count()
+    if total_tasks > 0:
+        progress_percentage = (completed_tasks / total_tasks) * 100
+    else:
+        progress_percentage = 100
+
+    context = {
+        'tasks': tasks,
+        'progress_percentage': progress_percentage,
+        'completed_tasks': completed_tasks,
+        'total_tasks': total_tasks,
+        'periodic_tasks': _build_periodic_task_items(request.user),
+    }
+    return render(request, 'todo/today_dashboard.html', context)
 
 @login_required
 def calendar_events(request):
@@ -53,7 +159,10 @@ def calendar_events(request):
         if schedule.page_count:
             title_text += f" ({schedule.page_count}p)"
 
-        events.append({
+            if getattr(schedule, 'title_override', None):
+                title_text = schedule.title_override
+
+    events.append({
             'id': schedule.pk,
             'title': title_text, # 進捗率(%)を表示したい場合はここに f"{title_text} ({progress_percentage}%)"
             'start': schedule.start_time.isoformat(),
@@ -250,6 +359,7 @@ def schedule_detail(request, pk):
         'completed_tasks': completed_tasks,
         'total_tasks': total_tasks,
         'form': form, # フォームをテンプレートに渡す
+        'task_form_action': reverse('todo:schedule_detail', kwargs={'pk': schedule.pk}),
     }
     return render(request, 'todo/schedule_detail.html', context)
 
@@ -275,6 +385,10 @@ def toggle_task(request, pk):
         progress_percentage = 100
 
     form = TaskForm()
+    if getattr(schedule, 'title_override', '') == "\u4eca\u65e5\u306e\u30bf\u30b9\u30af":
+        task_form_action = reverse('todo:today_tasks_setup')
+    else:
+        task_form_action = reverse('todo:schedule_detail', kwargs={'pk': schedule.pk})
     context = {
         'schedule': schedule,
         'tasks': tasks,
@@ -282,6 +396,7 @@ def toggle_task(request, pk):
         'completed_tasks': completed_tasks,
         'total_tasks': total_tasks,
         'form': form,
+        'task_form_action': task_form_action,
     }
     return render(request, 'todo/partials/task_list_and_progress.html', context)
 
@@ -644,6 +759,71 @@ def monthly_summary(request):
         'total_pages': sum(daily_pages.values())
     }
     return render(request, 'todo/monthly_summary.html', context)
+
+@login_required
+@require_POST
+def pomodoro_start(request):
+    """Create a Schedule entry from pomodoro timer."""
+    try:
+        data = json.loads(request.body.decode('utf-8'))
+    except Exception:
+        data = request.POST
+
+    title = (data.get('title') or '').strip() or 'Pomodoro'
+    work_minutes = int(data.get('work_minutes') or 25)
+
+    start_time = timezone.now()
+    end_time = start_time + timedelta(minutes=work_minutes)
+
+    schedule = Schedule.objects.create(
+        owner=request.user,
+        start_time=start_time,
+        end_time=end_time,
+        title_override=title,
+    )
+
+    return JsonResponse({'status': 'success', 'id': schedule.pk})
+
+
+@login_required
+@require_POST
+def periodic_task_create(request):
+    title = (request.POST.get('title') or '').strip()
+    if not title:
+        return redirect('todo:calendar')
+
+    interval_days = request.POST.get('interval_days') or '1'
+    try:
+        interval_days = int(interval_days)
+    except ValueError:
+        interval_days = 1
+    if interval_days < 1:
+        interval_days = 1
+
+    last_done_str = (request.POST.get('last_done') or '').strip()
+    last_done = None
+    if last_done_str:
+        try:
+            last_done = datetime.strptime(last_done_str, '%Y-%m-%d').date()
+        except ValueError:
+            last_done = None
+
+    PeriodicTask.objects.create(
+        owner=request.user,
+        title=title,
+        interval_days=interval_days,
+        last_done=last_done,
+    )
+    return redirect(request.META.get('HTTP_REFERER', reverse('todo:today_tasks_setup')))
+
+
+@login_required
+@require_POST
+def periodic_task_done(request, pk):
+    task = get_object_or_404(PeriodicTask, pk=pk, owner=request.user)
+    task.last_done = date.today()
+    task.save()
+    return redirect(request.META.get('HTTP_REFERER', reverse('todo:today_tasks_setup')))
 
 def public_calendar_events(request):
     """

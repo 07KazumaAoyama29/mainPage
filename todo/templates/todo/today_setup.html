@@ -1,0 +1,78 @@
+{% extends 'todo/base.html' %}
+
+{% block header %}
+  <h2 class="mb-3">&#20170;&#26085;&#12398;Todo&#35373;&#23450;</h2>
+  <div class="d-flex flex-wrap gap-2">
+    <a class="btn btn-outline-primary" href="{% url 'todo:today_dashboard' %}">&#20170;&#26085;&#12398;Todo</a>
+    <a class="btn btn-outline-secondary" href="{% url 'todo:calendar' %}">&#12473;&#12465;&#12472;&#12517;&#12540;&#12523;</a>
+  </div>
+{% endblock header %}
+
+{% block content %}
+  <section class="mb-4">
+    <div class="card">
+      <div class="card-body">
+        <h5 class="mb-3">&#23450;&#26399;&#12479;&#12473;&#12463;</h5>
+        <form method="post" action="{% url 'todo:periodic_task_create' %}" class="row g-2 align-items-end">
+          {% csrf_token %}
+          <div class="col-md-4">
+            <label class="form-label">&#12479;&#12473;&#12463;&#21517;</label>
+            <input type="text" name="title" class="form-control" placeholder="&#20363;: &#25955;&#30330;" required>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">&#38291;&#38548;(&#26085;)</label>
+            <input type="number" name="interval_days" class="form-control" value="30" min="1">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">&#21069;&#22238;&#23455;&#26045;&#26085;</label>
+            <input type="date" name="last_done" class="form-control">
+          </div>
+          <div class="col-md-2">
+            <button class="btn btn-outline-primary w-100">&#36861;&#21152;</button>
+          </div>
+        </form>
+
+        <div class="mt-3">
+          {% if periodic_tasks %}
+            <div class="list-group">
+              {% for item in periodic_tasks %}
+                <div class="list-group-item d-flex justify-content-between align-items-center flex-wrap gap-2">
+                  <div>
+                    <div class="fw-bold {% if item.is_overdue %}text-danger{% endif %}">{{ item.title }}</div>
+                    <div class="small {% if item.is_overdue %}text-danger{% else %}text-muted{% endif %}">
+                      &#38291;&#38548;: {{ item.interval_days }}&#26085;
+                      / &#21069;&#22238;: {% if item.last_done %}{{ item.last_done }}{% else %}&#26410;&#23455;&#26045;{% endif %}
+                      / &#32076;&#36942;: {{ item.days_display }}
+                    </div>
+                  </div>
+                  <div class="d-flex align-items-center gap-2">
+                    {% if item.is_overdue %}
+                      <span class="badge bg-danger">&#36229;&#36942;</span>
+                    {% else %}
+                      <span class="badge bg-success">OK</span>
+                    {% endif %}
+                    <form method="post" action="{% url 'todo:periodic_task_done' item.id %}">
+                      {% csrf_token %}
+                      <button class="btn btn-sm btn-outline-success">&#23436;&#20102;</button>
+                    </form>
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <div class="text-muted small">&#12414;&#12384;&#23450;&#26399;&#12479;&#12473;&#12463;&#12364;&#12354;&#12426;&#12414;&#12379;&#12435;&#12290;</div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="task-section">
+    <div class="card">
+      <div class="card-body">
+        <h5 class="mb-3">&#20170;&#26085;&#12398;&#12479;&#12473;&#12463;</h5>
+        {% include 'todo/partials/task_list_and_progress.html' %}
+      </div>
+    </div>
+  </section>
+{% endblock content %}
