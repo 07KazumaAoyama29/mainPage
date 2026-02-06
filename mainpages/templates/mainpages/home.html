@@ -55,8 +55,50 @@
         </div>
         </section>
 
-        
-        
+        <section id="schedule" class="py-5">
+            <div class="container">
+                <h2 class="text-center mb-5 border-bottom pb-2">My Schedule</h2>
+                <div class="row">
+                    <div class="col-md-10 mx-auto">
+                        <div class="card shadow-sm">
+                            <div class="card-body">
+                                <div id='public-calendar'></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.14/index.global.min.js'></script>
+        <script>
+          document.addEventListener('DOMContentLoaded', function() {
+            var calendarEl = document.getElementById('public-calendar');
+            if (!calendarEl) return;
+            var calendar = new FullCalendar.Calendar(calendarEl, {
+              initialView: 'timeGridWeek',
+              headerToolbar: {
+                left: 'prev,next today',
+                center: 'title',
+                right: 'dayGridMonth,timeGridWeek'
+              },
+              locale: 'ja',
+              nowIndicator: true,
+              events: '/schedule/api/public-events/',
+              editable: false,
+              selectable: false,
+              eventClick: function(info) {
+                  info.jsEvent.preventDefault(); 
+              },
+              slotMinTime: '08:00:00',
+              slotMaxTime: '24:00:00',
+              height: 'auto',
+              allDaySlot: true,
+              expandRows: true
+            });
+            calendar.render();
+          });
+        </script>
 
         <section id="affiliation" class="py-5">
     <div class="container">
