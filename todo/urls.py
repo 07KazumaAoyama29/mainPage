@@ -9,6 +9,7 @@ urlpatterns = [
     path("pomodoro/start/", views.pomodoro_start, name="pomodoro_start"),
     path("today/setup/", views.today_tasks_setup, name="today_tasks_setup"),
     path("periodic/create/", views.periodic_task_create, name="periodic_task_create"),
+    path("periodic/<int:pk>/update/", views.periodic_task_update, name="periodic_task_update"),
     path("periodic/<int:pk>/done/", views.periodic_task_done, name="periodic_task_done"),
 
     # スケジュール作成用

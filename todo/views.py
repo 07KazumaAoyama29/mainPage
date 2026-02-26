@@ -798,6 +798,37 @@ def periodic_task_create(request):
 
 @login_required
 @require_POST
+def periodic_task_update(request, pk):
+    task = get_object_or_404(PeriodicTask, pk=pk, owner=request.user)
+
+    title = (request.POST.get('title') or '').strip()
+    if title:
+        task.title = title
+
+    interval_days = request.POST.get('interval_days') or str(task.interval_days)
+    try:
+        interval_days = int(interval_days)
+    except ValueError:
+        interval_days = task.interval_days
+    if interval_days < 1:
+        interval_days = 1
+    task.interval_days = interval_days
+
+    last_done_str = (request.POST.get('last_done') or '').strip()
+    if last_done_str:
+        try:
+            task.last_done = datetime.strptime(last_done_str, '%Y-%m-%d').date()
+        except ValueError:
+            pass
+    else:
+        task.last_done = None
+
+    task.save()
+    return redirect(request.META.get('HTTP_REFERER', reverse('todo:today_tasks_setup')))
+
+
+@login_required
+@require_POST
 def periodic_task_done(request, pk):
     task = get_object_or_404(PeriodicTask, pk=pk, owner=request.user)
     task.last_done = date.today()

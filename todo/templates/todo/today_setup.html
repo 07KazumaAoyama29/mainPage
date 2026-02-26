@@ -50,6 +50,25 @@
                     {% else %}
                       <span class="badge bg-success">OK</span>
                     {% endif %}
+                    <details>
+                      <summary class="btn btn-sm btn-outline-secondary">&#32232;&#38598;</summary>
+                      <form method="post" action="{% url 'todo:periodic_task_update' item.id %}" class="mt-2">
+                        {% csrf_token %}
+                        <div class="mb-2">
+                          <label class="form-label small mb-1">&#12479;&#12473;&#12463;&#21517;</label>
+                          <input type="text" name="title" class="form-control form-control-sm" value="{{ item.title }}" required>
+                        </div>
+                        <div class="mb-2">
+                          <label class="form-label small mb-1">&#38291;&#38548;(&#26085;)</label>
+                          <input type="number" name="interval_days" class="form-control form-control-sm" value="{{ item.interval_days }}" min="1" required>
+                        </div>
+                        <div class="mb-2">
+                          <label class="form-label small mb-1">&#21069;&#22238;&#23455;&#26045;&#26085;</label>
+                          <input type="date" name="last_done" class="form-control form-control-sm" value="{% if item.last_done %}{{ item.last_done|date:'Y-m-d' }}{% endif %}">
+                        </div>
+                        <button class="btn btn-sm btn-primary w-100" type="submit">&#26356;&#26032;</button>
+                      </form>
+                    </details>
                     <form method="post" action="{% url 'todo:periodic_task_done' item.id %}">
                       {% csrf_token %}
                       <button class="btn btn-sm btn-outline-success">&#23436;&#20102;</button>

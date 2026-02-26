@@ -3,6 +3,11 @@
 {% block header %}
   {% if user.is_authenticated %}
   <div class="d-flex flex-wrap gap-2 mb-3">
+    <a class="btn btn-outline-primary" href="{% url 'todo:today_tasks_setup' %}" data-popup="true">&#20170;&#26085;&#12398;Todo&#35373;&#23450;</a>
+    <a class="btn btn-secondary" href="{% url 'todo:action_item_list' %}">Todoリスト</a>
+    <a class="btn btn-secondary" href="{% url 'todo:category_list' %}">&#12459;&#12486;&#12468;&#12522;&#31649;&#29702;</a>
+    <a class="btn btn-info" href="{% url 'todo:weekly_summary' %}">&#36913;&#38291;&#12469;&#12510;&#12522;&#12540;</a>
+    <a class="btn btn-success" href="{% url 'todo:monthly_summary' %}">&#26376;&#38291;&#12469;&#12510;&#12522;&#12540;</a>
     <button class="btn btn-primary"
             hx-get="{% url 'todo:create_form' %}"
             hx-target="#modal-content"
@@ -10,11 +15,7 @@
             data-bs-target="#modal">
       &#12473;&#12465;&#12472;&#12517;&#12540;&#12523;&#20316;&#25104;
     </button>
-    <a class="btn btn-secondary" href="{% url 'todo:action_item_list' %}">Todoリスト</a>
-    <a class="btn btn-secondary" href="{% url 'todo:category_list' %}">&#12459;&#12486;&#12468;&#12522;&#31649;&#29702;</a>
-    <a class="btn btn-info" href="{% url 'todo:weekly_summary' %}">&#36913;&#38291;&#12469;&#12510;&#12522;&#12540;</a>
-    <a class="btn btn-success" href="{% url 'todo:monthly_summary' %}">&#26376;&#38291;&#12469;&#12510;&#12522;&#12540;</a>
-    <a class="btn btn-outline-primary" href="{% url 'todo:today_tasks_setup' %}" data-popup="true">&#20170;&#26085;&#12398;Todo&#35373;&#23450;</a>
+    
   </div>
   {% endif %}
 {% endblock header %}
