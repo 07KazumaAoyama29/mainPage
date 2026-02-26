@@ -8,7 +8,6 @@ urlpatterns = [
     path("api/events/", views.calendar_events, name="calendar_events"),
     path("pomodoro/start/", views.pomodoro_start, name="pomodoro_start"),
     path("today/setup/", views.today_tasks_setup, name="today_tasks_setup"),
-    path("today/dashboard/", views.today_dashboard, name="today_dashboard"),
     path("periodic/create/", views.periodic_task_create, name="periodic_task_create"),
     path("periodic/<int:pk>/done/", views.periodic_task_done, name="periodic_task_done"),
 

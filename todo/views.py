@@ -105,27 +105,6 @@ def today_tasks_setup(request):
     }
     return render(request, 'todo/today_setup.html', context)
 
-
-@login_required
-def today_dashboard(request):
-    schedule = _get_or_create_today_schedule(request.user)
-    tasks = schedule.tasks.order_by('completed', 'position')
-    total_tasks = tasks.count()
-    completed_tasks = tasks.filter(completed=True).count()
-    if total_tasks > 0:
-        progress_percentage = (completed_tasks / total_tasks) * 100
-    else:
-        progress_percentage = 100
-
-    context = {
-        'tasks': tasks,
-        'progress_percentage': progress_percentage,
-        'completed_tasks': completed_tasks,
-        'total_tasks': total_tasks,
-        'periodic_tasks': _build_periodic_task_items(request.user),
-    }
-    return render(request, 'todo/today_dashboard.html', context)
-
 @login_required
 def calendar_events(request):
     """カレンダーに表示するイベント（スケジュール）をJSON形式で返すビュー"""
