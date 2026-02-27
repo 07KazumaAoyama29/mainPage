@@ -25,14 +25,17 @@
     <h1 class="mb-4">楽しめ！</h1>
     <h1 class="mb-4">他人を褒めろ！</h1>
     <div class="row g-3">
-        <div class="col-md-4">
+        <div class="col-md-3">
             <a href="{% url 'learning_logs:knowledge_list' %}" class="btn btn-primary w-100">Knowledge Base</a>
         </div>
-        <div class="col-md-4">
-            <a href="https://akamafu.com/schedule/" class="btn btn-primary w-100" data-popup="true">&#12473;&#12465;&#12472;&#12517;&#12540;&#12523;&#31649;&#29702;</a>
+        <div class="col-md-3">
+            <a href="https://akamafu.com/schedule/" class="btn btn-primary w-100" data-popup="true">スケジュール管理</a>
         </div>
-        <div class="col-md-4">
+        <div class="col-md-3">
             <a href="{% url 'reading_notes:list' %}" class="btn btn-success w-100">読書メモ</a>
+        </div>
+        <div class="col-md-3">
+            <a href="{% url 'memo:list' %}" class="btn btn-dark w-100">一次メモ</a>
         </div>
     </div>
 

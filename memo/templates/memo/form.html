@@ -1,0 +1,29 @@
+{% extends 'memo/base.html' %}
+{% block title %}{% if mode == 'create' %}メモ作成{% else %}メモ編集{% endif %}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    {% if mode == 'create' %}
+        <h1 class="h4 mb-0">メモ作成</h1>
+    {% else %}
+        <h1 class="h4 mb-0">メモ編集 (ID: {{ memo.sequence_id }})</h1>
+    {% endif %}
+    <a class="btn btn-outline-secondary" href="{% url 'memo:list' %}">一覧へ戻る</a>
+</div>
+
+<form method="post">
+    {% csrf_token %}
+    <div class="mb-3">
+        <label class="form-label" for="{{ form.title.id_for_label }}">タイトル</label>
+        {{ form.title }}
+    </div>
+    <div class="mb-3">
+        <label class="form-label" for="{{ form.body.id_for_label }}">本文</label>
+        {{ form.body }}
+        {% if form.body.errors %}
+            <div class="text-danger small mt-1">{{ form.body.errors }}</div>
+        {% endif %}
+    </div>
+    <button class="btn btn-primary" type="submit">保存</button>
+</form>
+{% endblock %}

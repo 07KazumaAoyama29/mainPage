@@ -71,6 +71,7 @@ INSTALLED_APPS = [
     #ロボ団タイマーアプリ
     'robodone_timer',
     'reading_notes.apps.ReadingNotesConfig',
+    'memo.apps.MemoConfig',
 ]
 
 MIDDLEWARE = [

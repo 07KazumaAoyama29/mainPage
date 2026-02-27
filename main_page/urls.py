@@ -34,7 +34,8 @@ urlpatterns = [
     #ロボ団タイマー
     path('robodonetimer/', include('robodone_timer.urls')),
     path('reading/', include('reading_notes.urls')),
-    path('recommend/', include('reading_notes.public_urls'))
+    path('recommend/', include('reading_notes.public_urls')),
+    path('memo/', include('memo.urls')),
 ]
 
 # media (always serve for now)

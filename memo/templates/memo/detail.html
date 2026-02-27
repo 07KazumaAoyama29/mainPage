@@ -1,0 +1,25 @@
+{% extends 'memo/base.html' %}
+{% block title %}メモ詳細{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h4 mb-0">メモ詳細 (ID: {{ memo.sequence_id }})</h1>
+    <div class="d-flex gap-2">
+        <a class="btn btn-outline-dark" href="{% url 'memo:export_single' memo.pk %}">.txt ダウンロード</a>
+        <a class="btn btn-outline-secondary" href="{% url 'memo:edit' memo.pk %}">編集</a>
+        <a class="btn btn-outline-danger" href="{% url 'memo:delete' memo.pk %}">削除</a>
+        <a class="btn btn-secondary" href="{% url 'memo:list' %}">一覧へ戻る</a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <p class="mb-2"><strong>タイトル:</strong> {{ memo.title }}</p>
+        <p class="mb-2"><strong>作成日時:</strong> {{ memo.created_at|date:"Y-m-d H:i:s" }}</p>
+        <p class="mb-3"><strong>更新日時:</strong> {{ memo.updated_at|date:"Y-m-d H:i:s" }}</p>
+        <hr>
+        <p class="mb-0" style="white-space: pre-wrap;">{{ memo.body }}</p>
+    </div>
+</div>
+{% endblock %}
+

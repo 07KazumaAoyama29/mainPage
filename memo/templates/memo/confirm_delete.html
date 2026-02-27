@@ -1,0 +1,15 @@
+{% extends 'memo/base.html' %}
+{% block title %}メモ削除{% endblock %}
+
+{% block content %}
+<h1 class="h4 mb-3">メモ削除</h1>
+<p>ID {{ memo.sequence_id }} を削除しますか？</p>
+<p class="text-muted">タイトル: {{ memo.title }}</p>
+
+<form method="post">
+    {% csrf_token %}
+    <button class="btn btn-danger" type="submit">削除する</button>
+    <a class="btn btn-secondary" href="{% url 'memo:list' %}">キャンセル</a>
+</form>
+{% endblock %}
+
