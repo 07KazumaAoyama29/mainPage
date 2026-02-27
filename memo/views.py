@@ -7,6 +7,17 @@ from .forms import QuickMemoForm
 from .models import QuickMemo
 
 
+def _safe_title_filename(title, max_len=30):
+    cleaned = (title or "").strip()
+    for ch in '<>:"/\\|?*':
+        cleaned = cleaned.replace(ch, "_")
+    cleaned = " ".join(cleaned.split())
+    cleaned = cleaned.rstrip(". ")
+    if not cleaned:
+        cleaned = "memo"
+    return cleaned[:max_len]
+
+
 def _memo_to_text(memo):
     created_at_local = timezone.localtime(memo.created_at)
     lines = [
@@ -75,7 +86,7 @@ def memo_delete(request, pk):
 def memo_export_single(request, pk):
     memo = get_object_or_404(QuickMemo, pk=pk, owner=request.user)
     content = _memo_to_text(memo) + "\n"
-    filename = f"memo_{memo.sequence_id}.txt"
+    filename = f"{_safe_title_filename(memo.title)}.txt"
     response = HttpResponse(content, content_type="text/plain; charset=utf-8")
     response["Content-Disposition"] = f'attachment; filename="{filename}"'
     return response
