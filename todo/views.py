@@ -1,4 +1,4 @@
-from django.shortcuts import render, redirect, get_object_or_404
+﻿from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from django.http import JsonResponse, HttpResponse
@@ -138,10 +138,10 @@ def calendar_events(request):
         if schedule.page_count:
             title_text += f" ({schedule.page_count}p)"
 
-            if getattr(schedule, 'title_override', None):
-                title_text = schedule.title_override
+        if getattr(schedule, 'title_override', None):
+            title_text = schedule.title_override
 
-    events.append({
+        events.append({
             'id': schedule.pk,
             'title': title_text, # 進捗率(%)を表示したい場合はここに f"{title_text} ({progress_percentage}%)"
             'start': schedule.start_time.isoformat(),
