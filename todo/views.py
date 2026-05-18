@@ -16,6 +16,9 @@ import json
 import calendar
 
 
+TODAY_TASK_TITLE = "\u4eca\u65e5\u306e\u30bf\u30b9\u30af"
+
+
 def _build_periodic_task_items(user):
     today = date.today()
     periodic_tasks = PeriodicTask.objects.filter(owner=user).order_by('id')
@@ -48,10 +51,9 @@ def _build_periodic_task_items(user):
 
 def _get_or_create_today_schedule(user):
     today = timezone.localdate()
-    today_title = "\u4eca\u65e5\u306e\u30bf\u30b9\u30af"
     schedule = Schedule.objects.filter(
         owner=user,
-        title_override=today_title,
+        title_override=TODAY_TASK_TITLE,
         start_time__date=today
     ).first()
     if schedule:
@@ -61,7 +63,7 @@ def _get_or_create_today_schedule(user):
     end_time = timezone.make_aware(datetime.combine(today, datetime.max.time()))
     return Schedule.objects.create(
         owner=user,
-        title_override=today_title,
+        title_override=TODAY_TASK_TITLE,
         start_time=start_time,
         end_time=end_time,
     )
@@ -109,7 +111,12 @@ def today_tasks_setup(request):
 def calendar_events(request):
     """カレンダーに表示するイベント（スケジュール）をJSON形式で返すビュー"""
     # select_related を action_category に変更
-    schedules = Schedule.objects.filter(owner=request.user).select_related('action_category')
+    schedules = (
+        Schedule.objects
+        .filter(owner=request.user)
+        .exclude(title_override=TODAY_TASK_TITLE)
+        .select_related('action_category')
+    )
     events = []
     
     for schedule in schedules:
@@ -364,7 +371,7 @@ def toggle_task(request, pk):
         progress_percentage = 100
 
     form = TaskForm()
-    if getattr(schedule, 'title_override', '') == "\u4eca\u65e5\u306e\u30bf\u30b9\u30af":
+    if getattr(schedule, 'title_override', '') == TODAY_TASK_TITLE:
         task_form_action = reverse('todo:today_tasks_setup')
     else:
         task_form_action = reverse('todo:schedule_detail', kwargs={'pk': schedule.pk})
@@ -742,26 +749,8 @@ def monthly_summary(request):
 @login_required
 @require_POST
 def pomodoro_start(request):
-    """Create a Schedule entry from pomodoro timer."""
-    try:
-        data = json.loads(request.body.decode('utf-8'))
-    except Exception:
-        data = request.POST
-
-    title = (data.get('title') or '').strip() or 'Pomodoro'
-    work_minutes = int(data.get('work_minutes') or 25)
-
-    start_time = timezone.now()
-    end_time = start_time + timedelta(minutes=work_minutes)
-
-    schedule = Schedule.objects.create(
-        owner=request.user,
-        start_time=start_time,
-        end_time=end_time,
-        title_override=title,
-    )
-
-    return JsonResponse({'status': 'success', 'id': schedule.pk})
+    """Pomodoro no longer creates calendar schedules."""
+    return JsonResponse({'status': 'success'})
 
 
 @login_required
@@ -841,7 +830,12 @@ def public_calendar_events(request):
     - 内容は伏せて「予定あり」で統一
     """
     target_user_id = 1
-    schedules = Schedule.objects.filter(owner_id=target_user_id).select_related('action_category', 'action_item')
+    schedules = (
+        Schedule.objects
+        .filter(owner_id=target_user_id)
+        .exclude(title_override=TODAY_TASK_TITLE)
+        .select_related('action_category', 'action_item')
+    )
 
     events = []
     for schedule in schedules:

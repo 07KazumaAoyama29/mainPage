@@ -210,30 +210,12 @@
           return;
         }
 
-        const title = (pomodoroTitleInput.value || '').trim();
         pomodoroRemainingSec = workMinutes * 60;
         pomodoroIsBreak = false;
         pomodoroSetDisplay();
 
         pomodoroStartBtn.disabled = true;
         pomodoroStopBtn.disabled = false;
-
-        try {
-          await fetch('{% url "todo:pomodoro_start" %}', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'X-CSRFToken': pomodoroCsrf ? pomodoroCsrf.value : ''
-            },
-            body: JSON.stringify({
-              title: title,
-              work_minutes: workMinutes,
-              break_minutes: breakMinutes
-            })
-          });
-        } catch (error) {
-          console.error('Pomodoro start failed:', error);
-        }
 
         pomodoroTimerId = setInterval(function() {
           pomodoroRemainingSec -= 1;
