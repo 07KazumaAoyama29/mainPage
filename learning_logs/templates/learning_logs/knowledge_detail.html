@@ -14,16 +14,19 @@
     </ol>
   </nav>
 
-  <h3>
-    {{ knowledge.title }}
+  <div class="mb-2">
+    <h3 class="d-inline">{{ knowledge.title }}</h3>
     {% if knowledge.is_public %}
       <span class="badge bg-success ms-2">公開</span>
     {% else %}
       <span class="badge bg-secondary ms-2">非公開</span>
     {% endif %}
+  </div>
+
+  <div class="d-flex flex-wrap gap-2">
     <a href="{% url 'learning_logs:edit_knowledge' pk=knowledge.pk %}" class="btn btn-secondary">編集</a>
     <button type="button" id="copyKnowledgeContent" class="btn btn-outline-primary">コピー</button>
-    <a href="{% url 'learning_logs:export_knowledge_markdown' knowledge_id=knowledge.pk %}" class="btn btn-outline-dark">.mdエクスポート</a>
+    <a href="{% url 'learning_logs:export_knowledge_markdown' knowledge_id=knowledge.pk %}" class="btn btn-outline-dark">エクスポート</a>
     <form action="{% url 'learning_logs:delete_knowledge' pk=knowledge.pk %}" method="post" class="d-inline-block">
       {% csrf_token %}
       <button type="submit" class="btn btn-danger" onclick="return confirm('本当にこの投稿を削除してもよろしいですか？');">削除</button>
@@ -38,7 +41,7 @@
         <li><a class="dropdown-item" href="{% url 'learning_logs:new_child_knowledge_with_type' parent_id=knowledge.pk knowledge_type='paper' %}">論文</a></li>
       </ul>
     </div>
-  </h3>
+  </div>
 {% endblock page_header %}
 
 {% block content %}
