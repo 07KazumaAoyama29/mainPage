@@ -45,6 +45,26 @@
 {% endblock page_header %}
 
 {% block content %}
+  <style>
+    .markdown-content table {
+      width: 100%;
+      margin-bottom: 1rem;
+      border-collapse: collapse;
+    }
+
+    .markdown-content th,
+    .markdown-content td {
+      padding: 0.5rem;
+      border: 1px solid #dee2e6;
+      vertical-align: top;
+    }
+
+    .markdown-content th {
+      background: #f8f9fa;
+      font-weight: 600;
+    }
+  </style>
+
   {{ knowledge.content|json_script:"knowledge-content-raw" }}
 
   <div class="mb-3">

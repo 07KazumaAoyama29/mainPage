@@ -83,7 +83,7 @@ def knowledge_detail(request, knowledge_id):
     comments = knowledge.comments.all().order_by('-date_added')
 
     # MarkdownをHTMLに変換
-    html_content = markdown.markdown(knowledge.content, extensions=['fenced_code', 'tables'])
+    html_content = markdown.markdown(knowledge.content, extensions=['extra', 'fenced_code', 'tables'])
     
     context = {
         'knowledge': knowledge,
@@ -269,7 +269,7 @@ def knowledge_detail(request, knowledge_id):
     comments = knowledge.comments.all().order_by('-date_added')
 
     # MarkdownをHTMLに変換
-    html_content = markdown.markdown(knowledge.content, extensions=['fenced_code', 'tables'])
+    html_content = markdown.markdown(knowledge.content, extensions=['extra', 'fenced_code', 'tables'])
     
     context = {
         'knowledge': knowledge,
