@@ -6,7 +6,7 @@ from .models import ReadingNote, AffiliateLink
 class ReadingNoteAdmin(admin.ModelAdmin):
     list_display = ("title", "status", "category", "rating", "is_public", "finished_at", "updated_at")
     list_filter = ("status", "category", "is_public")
-    search_fields = ("title", "author", "one_line_summary")
+    search_fields = ("title", "author", "one_line_summary", "reading_purpose")
 
 
 @admin.register(AffiliateLink)

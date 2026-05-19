@@ -4,10 +4,18 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from .models import Knowledge, Tag, Comment
 from .forms import KnowledgeForm , CommentForm, TagForm
-from django.http import Http404
+from django.http import Http404, HttpResponse
 from django import forms
 
 import markdown
+
+
+def _safe_markdown_filename(title, max_len=50):
+    cleaned = (title or "").strip()
+    for ch in '<>:"/\\|?*':
+        cleaned = cleaned.replace(ch, "_")
+    cleaned = " ".join(cleaned.split()).rstrip(". ")
+    return (cleaned or "note")[:max_len]
 
 #汎用関数
 def check_knowledge_owner(request, knowledge):
@@ -272,6 +280,19 @@ def knowledge_detail(request, knowledge_id):
         'breadcrumb_trail': breadcrumb_trail
     }
     return render(request, 'learning_logs/knowledge_detail.html', context)
+
+
+def export_knowledge_markdown(request, knowledge_id):
+    knowledge = get_object_or_404(Knowledge, pk=knowledge_id)
+
+    if not knowledge.is_public and knowledge.owner != request.user:
+        raise Http404
+
+    filename = f"{_safe_markdown_filename(knowledge.title)}.md"
+    response = HttpResponse(knowledge.content, content_type="text/markdown; charset=utf-8")
+    response["Content-Disposition"] = f'attachment; filename="{filename}"'
+    return response
+
 
 def profile(request, username):
     """ユーザープロフィールページを表示する"""

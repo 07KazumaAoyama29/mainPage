@@ -1,85 +1,88 @@
 {% extends "learning_logs/base.html" %}
 
 {% block content %}
-    <h3>投稿を編集する</h3>
-    <p>編集内容を送信してください。</p>
+  <h3>ノートを編集する</h3>
+  <p>編集内容を送信してください。</p>
 
-    <form action="{% url 'learning_logs:edit_knowledge' pk=knowledge.pk %}" method="post">
-        {% csrf_token %}
-        <div class="mb-3">
-          知識の種類:  {{ form.knowledge_type }}
+  <form action="{% url 'learning_logs:edit_knowledge' pk=knowledge.pk %}" method="post">
+    {% csrf_token %}
+    <div class="mb-3">
+      {{ form.knowledge_type.label_tag }}
+      {{ form.knowledge_type }}
+    </div>
+    <div class="mb-3">
+      {{ form.title.label_tag }}
+      <div>{{ form.title }}</div>
+    </div>
+    <div class="mb-3">
+      {{ form.content.label_tag }}
+      <div class="row g-3">
+        <div class="col-lg-6">{{ form.content }}</div>
+        <div class="col-lg-6">
+          <div id="markdown-preview" class="markdown-editor-preview"></div>
         </div>
-        <div class="mb-3">
-          {{ form.title.label_tag }}
-          <div>{{ form.title }}</div>
-        </div>
-        <div class="mb-3">
-          {{ form.content.label_tag }}
-          <div>{{ form.content }}</div>
-        </div>
-        <div class="mb-3">
-          {{ form.tags.label_tag }}
-          <div>{{ form.tags }}</div>
-        </div>
-        <div class="mb-3">公開設定:
-        <div class="mb-3 form-check">
-          {{ form.is_public }}
-          <label class="form-check-label" for="{{ form.is_public.id_for_label }}">
-            知識を公開する
-          </label>
-        </div>
-        </div>
+      </div>
+    </div>
+    <div class="mb-3">
+      {{ form.tags.label_tag }}
+      <div>{{ form.tags }}</div>
+    </div>
+    <div class="mb-3 form-check">
+      {{ form.is_public }}
+      <label class="form-check-label" for="{{ form.is_public.id_for_label }}">ノートを公開する</label>
+    </div>
 
-        <div id="book-fields" style="display: none;">
-          <div class="mb-3">
-            {{ form.page.label_tag }}
-            <div>{{ form.page }}</div>
-          </div>
-          <div class="mb-3">
-            {{ form.size.label_tag }}
-            <div>{{ form.size }}</div>
-          </div>
-          <div class="mb-3">
-            {{ form.author.label_tag }}
-            <div>{{ form.author }}</div>
-          </div>
-          <div class="mb-3">
-            {{ form.isbn.label_tag }}
-            <div>{{ form.isbn }}</div>
-          </div>
-          <div class="mb-3">
-            {{ form.genre.label_tag }}
-            <div>{{ form.genre }}</div>
-          </div>
-        </div>
+    <div id="book-fields" style="display: none;">
+      <div class="mb-3">
+        {{ form.page.label_tag }}
+        <div>{{ form.page }}</div>
+      </div>
+      <div class="mb-3">
+        {{ form.size.label_tag }}
+        <div>{{ form.size }}</div>
+      </div>
+      <div class="mb-3">
+        {{ form.author.label_tag }}
+        <div>{{ form.author }}</div>
+      </div>
+      <div class="mb-3">
+        {{ form.isbn.label_tag }}
+        <div>{{ form.isbn }}</div>
+      </div>
+      <div class="mb-3">
+        {{ form.genre.label_tag }}
+        <div>{{ form.genre }}</div>
+      </div>
+    </div>
 
-        {{ form.parent }} 
+    {{ form.parent }}
 
-        <button name="submit" class="btn btn-primary">保存</button>
-    </form>
+    <button name="submit" class="btn btn-primary">保存</button>
+  </form>
 
-    <script>
-      document.addEventListener('DOMContentLoaded', function() {
-        const knowledgeType = document.getElementById('id_knowledge_type');
-        const bookFields = document.getElementById('book-fields');
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const knowledgeType = document.getElementById('id_knowledge_type');
+      const bookFields = document.getElementById('book-fields');
 
-        function toggleFields() {
-          if (knowledgeType.value === 'book' || knowledgeType.value === 'paper') {
-            bookFields.style.display = 'block';
-          } else {
-            bookFields.style.display = 'none';
-          }
+      function toggleFields() {
+        if (knowledgeType.value === 'book' || knowledgeType.value === 'paper') {
+          bookFields.style.display = 'block';
+        } else {
+          bookFields.style.display = 'none';
         }
+      }
 
-        knowledgeType.addEventListener('change', toggleFields);
-        toggleFields();
-      });
-    </script>
+      knowledgeType.addEventListener('change', toggleFields);
+      toggleFields();
+    });
+  </script>
+  {% include "learning_logs/partials/markdown_preview.html" %}
 
-    <hr>
-    
-    <form action="{% url 'learning_logs:delete_knowledge' pk=knowledge.pk %}" method="post" class="mt-3">
-      {% csrf_token %}
-      <button type="submit" class="btn btn-danger" onclick="return confirm('本当にこの投稿を削除してもよろしいですか？');">削除</button>
-    </form>
+  <hr>
+
+  <form action="{% url 'learning_logs:delete_knowledge' pk=knowledge.pk %}" method="post" class="mt-3">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-danger" onclick="return confirm('本当にこの投稿を削除してもよろしいですか？');">削除</button>
+  </form>
 {% endblock content %}

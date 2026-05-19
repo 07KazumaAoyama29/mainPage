@@ -42,6 +42,9 @@
                 {% if note.one_line_summary %}
                     <p><strong>&#x4E00;&#x8A00;&#x8981;&#x7D04;:</strong><br>{{ note.one_line_summary|linebreaksbr }}</p>
                 {% endif %}
+                {% if note.reading_purpose %}
+                    <p><strong>この本を読む目的・テーマ:</strong><br>{{ note.reading_purpose|linebreaksbr }}</p>
+                {% endif %}
 
                 {% if note.affiliate_links.count %}
                     <div class="mt-3">

@@ -1,7 +1,9 @@
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.forms import inlineformset_factory
+from django.http import HttpResponse
 from django.shortcuts import render, get_object_or_404, redirect
+from django.utils import timezone
 
 from .forms import ReadingNoteForm, AffiliateLinkForm
 from .models import ReadingNote, AffiliateLink
@@ -13,6 +15,20 @@ AffiliateLinkFormSet = inlineformset_factory(
     extra=2,
     can_delete=False,
 )
+
+
+def _format_note_for_export(note):
+    return "\n".join([
+        f"[{note.title}]",
+        f"著者: {note.author}",
+        "読書中の感想:",
+        note.impression_during,
+        "読む目的・テーマ:",
+        note.reading_purpose,
+        "読了後の感想:",
+        note.impression_after,
+        "-----",
+    ])
 
 
 @login_required
@@ -29,6 +45,7 @@ def note_list(request):
             Q(title__icontains=q)
             | Q(author__icontains=q)
             | Q(one_line_summary__icontains=q)
+            | Q(reading_purpose__icontains=q)
         )
 
     sort = request.GET.get("sort", "updated")
@@ -53,6 +70,27 @@ def note_list(request):
         "status": status,
     }
     return render(request, "reading_notes/list.html", context)
+
+
+@login_required
+def note_export_selected(request):
+    if request.method != "POST":
+        return redirect("reading_notes:list")
+
+    note_ids = request.POST.getlist("note_ids")
+    notes = ReadingNote.objects.filter(owner=request.user, pk__in=note_ids)
+
+    id_order = {int(note_id): index for index, note_id in enumerate(note_ids) if note_id.isdigit()}
+    notes = sorted(notes, key=lambda note: id_order.get(note.pk, len(id_order)))
+
+    content = "\n".join(_format_note_for_export(note) for note in notes)
+    if content:
+        content += "\n"
+
+    filename = f"{timezone.localdate().strftime('%Y-%m-%d')}-memo.txt"
+    response = HttpResponse(content, content_type="text/plain; charset=utf-8")
+    response["Content-Disposition"] = f'attachment; filename="{filename}"'
+    return response
 
 
 @login_required

@@ -6,6 +6,7 @@ app_name = "reading_notes"
 urlpatterns = [
     path("", views.note_list, name="list"),
     path("new/", views.note_create, name="create"),
+    path("export/", views.note_export_selected, name="export_selected"),
     path("<int:pk>/", views.note_detail, name="detail"),
     path("<int:pk>/edit/", views.note_edit, name="edit"),
     path("<int:pk>/delete/", views.note_delete, name="delete"),

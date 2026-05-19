@@ -1,14 +1,12 @@
 {% extends "learning_logs/base.html" %}
 
 {% block page_header %}
-  <h2>すべての知識</h2>
+  <h2>すべてのノート</h2>
 {% endblock page_header %}
 
 {% block content %}
   <div class="mb-4">
-    <a href="{% url 'learning_logs:new_knowledge' %}" class="btn btn-primary">
-  新しい知識を追加する
-</a>
+    <a href="{% url 'learning_logs:new_knowledge' %}" class="btn btn-primary">新しいノートを追加する</a>
   </div>
 
   {% if knowledges %}
@@ -27,13 +25,13 @@
                   <span class="badge bg-secondary ms-2">非公開</span>
                 {% endif %}
               </h5>
-              <p class="card-text text-muted">最終更新日: {{ knowledge.date_added }}</p>
+              <p class="card-text text-muted">作成日: {{ knowledge.date_added }}</p>
             </div>
           </div>
         </div>
       {% endfor %}
     </div>
   {% else %}
-    <p>まだ知識が登録されていません。</p>
+    <p>まだノートが登録されていません。</p>
   {% endif %}
 {% endblock content %}

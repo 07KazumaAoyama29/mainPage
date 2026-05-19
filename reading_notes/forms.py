@@ -16,6 +16,7 @@ class ReadingNoteForm(forms.ModelForm):
             "is_public",
             "cover_image",
             "one_line_summary",
+            "reading_purpose",
             "impression_during",
             "impression_after",
             "comparison_notes",

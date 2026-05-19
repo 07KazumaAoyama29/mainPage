@@ -3,7 +3,7 @@
 {% block page_header %}
   <div class="row">
     <div class="col-8">
-      <h2>{{ profile_user.username }}のプロフィール</h2>
+      <h2>{{ profile_user.username }} のプロフィール</h2>
     </div>
   </div>
 {% endblock page_header %}
@@ -11,7 +11,7 @@
 {% block content %}
   <div class="row">
     <div class="col-8">
-      <h3>投稿した知識</h3>
+      <h3>投稿したノート</h3>
       <hr>
       {% if knowledges %}
         <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
@@ -29,14 +29,14 @@
                       <span class="badge bg-secondary ms-2">非公開</span>
                     {% endif %}
                   </h5>
-                  <p class="card-text text-muted">最終更新日: {{ knowledge.date_added }}</p>
+                  <p class="card-text text-muted">作成日: {{ knowledge.date_added }}</p>
                 </div>
               </div>
             </div>
           {% endfor %}
         </div>
       {% else %}
-        <p>まだ知識を投稿していません。</p>
+        <p>まだノートを投稿していません。</p>
       {% endif %}
     </div>
   </div>

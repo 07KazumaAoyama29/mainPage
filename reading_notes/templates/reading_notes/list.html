@@ -38,9 +38,15 @@
 </form>
 
 <div class="table-responsive">
+<form method="post" action="{% url 'reading_notes:export_selected' %}">
+    {% csrf_token %}
+    <div class="d-flex justify-content-end mb-2">
+        <button class="btn btn-outline-dark" type="submit">選択したメモを.txtエクスポート</button>
+    </div>
     <table class="table table-striped align-middle">
         <thead>
             <tr>
+                <th></th>
                 <th>&#x30BF;&#x30A4;&#x30C8;&#x30EB;</th>
                 <th>&#x30B9;&#x30C6;&#x30FC;&#x30BF;&#x30B9;</th>
                 <th>&#x304A;&#x3059;&#x3059;&#x3081;&#x5EA6;</th>
@@ -52,6 +58,9 @@
         <tbody>
         {% for note in notes %}
             <tr>
+                <td>
+                    <input class="form-check-input" type="checkbox" name="note_ids" value="{{ note.pk }}">
+                </td>
                 <td><a href="{% url 'reading_notes:detail' note.pk %}">{{ note.title }}</a></td>
                 <td>{{ note.get_status_display }}</td>
                 <td>{% if note.rating %}{{ note.rating }}{% else %}-{% endif %}</td>
@@ -63,10 +72,11 @@
             </tr>
         {% empty %}
             <tr>
-                <td colspan="6" class="text-center text-muted">&#x30E1;&#x30E2;&#x304C;&#x307E;&#x3060;&#x3042;&#x308A;&#x307E;&#x305B;&#x3093;</td>
+                <td colspan="7" class="text-center text-muted">&#x30E1;&#x30E2;&#x304C;&#x307E;&#x3060;&#x3042;&#x308A;&#x307E;&#x305B;&#x3093;</td>
             </tr>
         {% endfor %}
         </tbody>
     </table>
+</form>
 </div>
 {% endblock %}

@@ -35,6 +35,7 @@ class ReadingNote(models.Model):
     cover_image = models.ImageField("画像", upload_to="reading_notes/covers/", blank=True, null=True)
 
     one_line_summary = models.CharField("一言要約", max_length=300, blank=True)
+    reading_purpose = models.TextField("この本を読む目的・テーマ", blank=True)
     impression_during = models.TextField("読書中の感想", blank=True)
     impression_after = models.TextField("読了後の感想", blank=True)
     comparison_notes = models.TextField("他作品と比べた感想", blank=True)

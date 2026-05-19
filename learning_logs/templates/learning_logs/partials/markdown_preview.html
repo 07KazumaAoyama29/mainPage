@@ -1,0 +1,135 @@
+<style>
+  .markdown-editor-preview {
+    min-height: 420px;
+    max-height: 70vh;
+    overflow: auto;
+    border: 1px solid #dee2e6;
+    border-radius: 0.375rem;
+    padding: 0.75rem;
+    background: #fff;
+  }
+
+  .markdown-editor-preview pre {
+    padding: 0.75rem;
+    background: #f8f9fa;
+    border-radius: 0.375rem;
+    overflow-x: auto;
+  }
+
+  .markdown-editor-preview code {
+    background: #f8f9fa;
+    padding: 0.1rem 0.25rem;
+    border-radius: 0.25rem;
+  }
+
+  .markdown-editor-preview blockquote {
+    border-left: 4px solid #adb5bd;
+    padding-left: 0.75rem;
+    color: #495057;
+  }
+</style>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const textarea = document.getElementById('id_content');
+    const preview = document.getElementById('markdown-preview');
+    if (!textarea || !preview) return;
+
+    function escapeHtml(value) {
+      return value
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+    }
+
+    function renderInline(value) {
+      return escapeHtml(value)
+        .replace(/`([^`]+)`/g, '<code>$1</code>')
+        .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*([^*]+)\*/g, '<em>$1</em>')
+        .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+    }
+
+    function renderMarkdown(markdown) {
+      const lines = markdown.split(/\r?\n/);
+      const html = [];
+      let inCode = false;
+      let codeLines = [];
+      let inList = false;
+
+      function closeList() {
+        if (inList) {
+          html.push('</ul>');
+          inList = false;
+        }
+      }
+
+      for (const line of lines) {
+        if (line.trim().startsWith('```')) {
+          if (inCode) {
+            html.push('<pre><code>' + escapeHtml(codeLines.join('\n')) + '</code></pre>');
+            codeLines = [];
+            inCode = false;
+          } else {
+            closeList();
+            inCode = true;
+          }
+          continue;
+        }
+
+        if (inCode) {
+          codeLines.push(line);
+          continue;
+        }
+
+        if (!line.trim()) {
+          closeList();
+          continue;
+        }
+
+        const heading = line.match(/^(#{1,6})\s+(.+)$/);
+        if (heading) {
+          closeList();
+          const level = heading[1].length;
+          html.push('<h' + level + '>' + renderInline(heading[2]) + '</h' + level + '>');
+          continue;
+        }
+
+        const listItem = line.match(/^\s*[-*]\s+(.+)$/);
+        if (listItem) {
+          if (!inList) {
+            html.push('<ul>');
+            inList = true;
+          }
+          html.push('<li>' + renderInline(listItem[1]) + '</li>');
+          continue;
+        }
+
+        const quote = line.match(/^>\s?(.+)$/);
+        if (quote) {
+          closeList();
+          html.push('<blockquote>' + renderInline(quote[1]) + '</blockquote>');
+          continue;
+        }
+
+        closeList();
+        html.push('<p>' + renderInline(line) + '</p>');
+      }
+
+      closeList();
+      if (inCode) {
+        html.push('<pre><code>' + escapeHtml(codeLines.join('\n')) + '</code></pre>');
+      }
+      return html.join('\n');
+    }
+
+    function updatePreview() {
+      preview.innerHTML = renderMarkdown(textarea.value);
+    }
+
+    textarea.addEventListener('input', updatePreview);
+    updatePreview();
+  });
+</script>

@@ -22,24 +22,28 @@
       <span class="badge bg-secondary ms-2">非公開</span>
     {% endif %}
     <a href="{% url 'learning_logs:edit_knowledge' pk=knowledge.pk %}" class="btn btn-secondary">編集</a>
+    <button type="button" id="copyKnowledgeContent" class="btn btn-outline-primary">コピー</button>
+    <a href="{% url 'learning_logs:export_knowledge_markdown' knowledge_id=knowledge.pk %}" class="btn btn-outline-dark">.mdエクスポート</a>
     <form action="{% url 'learning_logs:delete_knowledge' pk=knowledge.pk %}" method="post" class="d-inline-block">
       {% csrf_token %}
       <button type="submit" class="btn btn-danger" onclick="return confirm('本当にこの投稿を削除してもよろしいですか？');">削除</button>
     </form>
     <div class="dropdown d-inline-block">
-        <button class="btn btn-primary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-          新しい知識を追加する
-        </button>
-        <ul class="dropdown-menu">
-          <li><a class="dropdown-item" href="{% url 'learning_logs:new_child_knowledge' parent_id=knowledge.pk %}">一般</a></li>
-          <li><a class="dropdown-item" href="{% url 'learning_logs:new_child_knowledge_with_type' parent_id=knowledge.pk knowledge_type='book' %}">書籍</a></li>
-          <li><a class="dropdown-item" href="{% url 'learning_logs:new_child_knowledge_with_type' parent_id=knowledge.pk knowledge_type='paper' %}">論文</a></li>
-        </ul>
-      </div>
-  </h2>
+      <button class="btn btn-primary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+        子ノートを追加する
+      </button>
+      <ul class="dropdown-menu">
+        <li><a class="dropdown-item" href="{% url 'learning_logs:new_child_knowledge' parent_id=knowledge.pk %}">一般</a></li>
+        <li><a class="dropdown-item" href="{% url 'learning_logs:new_child_knowledge_with_type' parent_id=knowledge.pk knowledge_type='book' %}">書籍</a></li>
+        <li><a class="dropdown-item" href="{% url 'learning_logs:new_child_knowledge_with_type' parent_id=knowledge.pk knowledge_type='paper' %}">論文</a></li>
+      </ul>
+    </div>
+  </h3>
 {% endblock page_header %}
 
 {% block content %}
+  {{ knowledge.content|json_script:"knowledge-content-raw" }}
+
   <div class="mb-3">
     {% for tag in knowledge.tags.all %}
       <a href="{% url 'learning_logs:tag_list' tag_name=tag.name %}" class="badge bg-secondary text-decoration-none">{{ tag.name }}</a>
@@ -78,7 +82,7 @@
       {% endfor %}
     </div>
   {% else %}
-    <p>この要素には子要素がありません。</p>
+    <p>このノートには子ノートがありません。</p>
   {% endif %}
 
   <hr>
@@ -90,9 +94,7 @@
       <li class="mb-3 p-3 bg-light border rounded">
         <p class="mb-1">{{ comment.text|linebreaks }}</p>
         <small class="text-muted d-flex justify-content-between align-items-center">
-          <span>
-            投稿者: {{ comment.user.username }} / 投稿日時: {{ comment.date_added }}
-          </span>
+          <span>投稿者: {{ comment.user.username }} / 投稿日時: {{ comment.date_added }}</span>
           {% if comment.user == user %}
             <form action="{% url 'learning_logs:delete_comment' comment_id=comment.pk %}" method="post">
               {% csrf_token %}
@@ -112,7 +114,11 @@
       <h5>コメントを投稿する</h5>
       <form action="{% url 'learning_logs:knowledge_detail' knowledge_id=knowledge.pk %}" method="post">
         {% csrf_token %}
-        {{ comment_form.as_p }}
+        {% if comment_form %}
+          {{ comment_form.as_p }}
+        {% else %}
+          {{ form.as_p }}
+        {% endif %}
         <button name="comment-submit" class="btn btn-primary mt-2">投稿する</button>
       </form>
     </div>
@@ -121,4 +127,26 @@
       <p>コメントを投稿するには<a href="{% url 'accounts:login' %}">ログイン</a>してください。</p>
     </div>
   {% endif %}
+
+  <script>
+    (function () {
+      const button = document.getElementById('copyKnowledgeContent');
+      const rawContent = document.getElementById('knowledge-content-raw');
+      if (!button || !rawContent) return;
+
+      button.addEventListener('click', async function () {
+        const text = JSON.parse(rawContent.textContent);
+        try {
+          await navigator.clipboard.writeText(text);
+          const originalText = button.textContent;
+          button.textContent = 'コピーしました';
+          setTimeout(function () {
+            button.textContent = originalText;
+          }, 1600);
+        } catch (error) {
+          alert('コピーに失敗しました。');
+        }
+      });
+    })();
+  </script>
 {% endblock content %}
