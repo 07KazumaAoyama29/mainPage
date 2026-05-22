@@ -4,19 +4,67 @@ from django.contrib.auth.models import User
 from django.http import JsonResponse, HttpResponse
 from django.urls import reverse_lazy, reverse
 from django.views.decorators.http import require_POST
-from django.db.models import Sum
+from django.db.models import Q, Sum
 from django.utils import timezone
 
 from datetime import datetime, timedelta, date
 
 from .models import Schedule, Task, ActionItem, ActionCategory, PeriodicTask
-from .forms import ScheduleForm, TaskForm, ActionItemForm, ActionCategoryForm
+from .forms import ScheduleForm, TaskForm, ActionItemForm, PrivateActionItemForm, ReadingActionItemForm, ActionCategoryForm
 
 import json
 import calendar
 
 
 TODAY_TASK_TITLE = "\u4eca\u65e5\u306e\u30bf\u30b9\u30af"
+
+ACTION_ITEM_SECTIONS = {'todo', 'reading', 'private'}
+SECTION_CATEGORY_NAMES = {
+    'reading': '読書',
+    'private': 'その他',
+}
+
+
+def _normalize_action_item_section(section):
+    if section in ACTION_ITEM_SECTIONS:
+        return section
+    return 'todo'
+
+
+def _get_or_create_action_category(user, section):
+    name = SECTION_CATEGORY_NAMES.get(section)
+    if not name:
+        return None
+    defaults = {'color': '#198754' if section == 'reading' else '#6c757d'}
+    category, _ = ActionCategory.objects.get_or_create(owner=user, name=name, defaults=defaults)
+    return category
+
+
+def _get_action_item_form_class(section):
+    if section == 'reading':
+        return ReadingActionItemForm
+    if section == 'private':
+        return PrivateActionItemForm
+    return ActionItemForm
+
+
+def _get_action_item_section_from_item(item):
+    if item.category and item.category.name == '読書':
+        return 'reading'
+    if item.category is None or item.category.name == 'その他':
+        return 'private'
+    return 'todo'
+
+
+def _group_reading_items_by_theme(action_items):
+    grouped = {}
+    for item in action_items:
+        theme = item.theme.strip() if item.theme else '未設定'
+        grouped.setdefault(theme, []).append(item)
+    return [
+        {'theme': theme, 'items': sorted(items, key=lambda item: item.title)}
+        for theme, items in sorted(grouped.items(), key=lambda pair: pair[0])
+    ]
 
 
 def _build_periodic_task_items(user):
@@ -395,6 +443,8 @@ def toggle_action_item_completion(request, pk):
     action_item.save()
     
     # 部分テンプレートを更新して返す
+    if _get_action_item_section_from_item(action_item) == 'reading':
+        return render(request, 'todo/partials/reading_action_item_card.html', {'item': action_item})
     return render(request, 'todo/partials/action_item_list_item.html', {'item': action_item})
 
 @login_required
@@ -418,17 +468,34 @@ def action_item_detail(request, pk):
 def action_item_list(request):
     """やることリスト（ActionItem）の一覧ページ（絞り込み機能付き）"""
     
-    action_items = ActionItem.objects.filter(owner=request.user)
+    action_items = ActionItem.objects.filter(owner=request.user).select_related('category')
 
-    filter_param = request.GET.get('filter')
+    section_param = _normalize_action_item_section(request.GET.get('section', 'todo'))
+    if section_param == 'reading':
+        action_items = action_items.filter(category__name='読書')
+    elif section_param == 'private':
+        action_items = action_items.filter(Q(category__name='その他') | Q(category__isnull=True))
+    else:
+        section_param = 'todo'
+        action_items = action_items.exclude(
+            Q(category__name__in=['読書', 'その他']) | Q(category__isnull=True)
+        )
+
+    filter_param = request.GET.get('filter', 'all')
     if filter_param == 'completed':
         action_items = action_items.filter(completed=True)
     elif filter_param == 'incomplete':
         action_items = action_items.filter(completed=False)
+    else:
+        filter_param = 'all'
 
     context = {
-        'action_items': action_items.order_by('completed', 'due_date', 'pk')
+        'action_items': action_items.order_by('completed', 'due_date', 'pk'),
+        'filter_param': filter_param,
+        'section_param': section_param,
     }
+    if section_param == 'reading':
+        context['reading_groups'] = _group_reading_items_by_theme(context['action_items'])
 
     if request.headers.get('HX-Request'):
         return render(request, 'todo/partials/action_item_list_content.html', context)
@@ -438,42 +505,83 @@ def action_item_list(request):
 @login_required
 def action_item_create_form(request):
     """モーダルに表示するための、空のActionItem作成フォームを返す"""
-    form = ActionItemForm()
-    return render(request, 'todo/partials/action_item_form.html', {'form': form})
+    section_param = _normalize_action_item_section(request.GET.get('section', 'todo'))
+    form_class = _get_action_item_form_class(section_param)
+    form_kwargs = {}
+    if form_class is ActionItemForm:
+        form_kwargs['user'] = request.user
+    form = form_class(**form_kwargs)
+    return render(request, 'todo/partials/action_item_form.html', {
+        'form': form,
+        'section_param': section_param,
+    })
 
 @login_required
 @require_POST
 def action_item_create(request):
     """ActionItemを作成する"""
-    form = ActionItemForm(request.POST)
+    section_param = _normalize_action_item_section(request.GET.get('section', request.POST.get('section', 'todo')))
+    form_class = _get_action_item_form_class(section_param)
+    form_kwargs = {'data': request.POST, 'files': request.FILES}
+    if form_class is ActionItemForm:
+        form_kwargs['user'] = request.user
+    form = form_class(**form_kwargs)
     if form.is_valid():
         item = form.save(commit=False)
         item.owner = request.user
+        fixed_category = _get_or_create_action_category(request.user, section_param)
+        if fixed_category:
+            item.category = fixed_category
         item.save()
         response = HttpResponse(status=204)
         response['HX-Refresh'] = 'true' # ページ全体をリフレッシュ
         return response
-    return render(request, 'todo/partials/action_item_form.html', {'form': form})
+    return render(request, 'todo/partials/action_item_form.html', {
+        'form': form,
+        'section_param': section_param,
+    })
 
 @login_required
 def action_item_edit_form(request, pk):
     """モーダルに表示するための、データが入ったActionItem編集フォームを返す"""
     item = get_object_or_404(ActionItem, pk=pk, owner=request.user)
-    form = ActionItemForm(instance=item)
-    return render(request, 'todo/partials/action_item_form.html', {'form': form, 'item': item})
+    section_param = _get_action_item_section_from_item(item)
+    form_class = _get_action_item_form_class(section_param)
+    form_kwargs = {'instance': item}
+    if form_class is ActionItemForm:
+        form_kwargs['user'] = request.user
+    form = form_class(**form_kwargs)
+    return render(request, 'todo/partials/action_item_form.html', {
+        'form': form,
+        'item': item,
+        'section_param': section_param,
+    })
 
 @login_required
 @require_POST
 def action_item_update(request, pk):
     """ActionItemを更新する"""
     item = get_object_or_404(ActionItem, pk=pk, owner=request.user)
-    form = ActionItemForm(request.POST, instance=item)
+    section_param = _get_action_item_section_from_item(item)
+    form_class = _get_action_item_form_class(section_param)
+    form_kwargs = {'data': request.POST, 'files': request.FILES, 'instance': item}
+    if form_class is ActionItemForm:
+        form_kwargs['user'] = request.user
+    form = form_class(**form_kwargs)
     if form.is_valid():
-        form.save()
+        updated_item = form.save(commit=False)
+        fixed_category = _get_or_create_action_category(request.user, section_param)
+        if fixed_category:
+            updated_item.category = fixed_category
+        updated_item.save()
         response = HttpResponse(status=204)
         response['HX-Refresh'] = 'true' # ページ全体をリフレッシュ
         return response
-    return render(request, 'todo/partials/action_item_form.html', {'form': form, 'item': item})
+    return render(request, 'todo/partials/action_item_form.html', {
+        'form': form,
+        'item': item,
+        'section_param': section_param,
+    })
 
 @login_required
 @require_POST # Django 4.1以降では @require_http_methods(["DELETE"]) が推奨

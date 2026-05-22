@@ -1,7 +1,22 @@
-<div class="list-group">
-  {% for item in action_items %}
-    {% include 'todo/partials/action_item_list_item.html' with item=item %}
+{% if section_param == 'reading' %}
+  {% for group in reading_groups %}
+    <section class="mb-4">
+      <h4 class="h5 border-bottom pb-2 mb-3">{{ group.theme }}</h4>
+      <div class="row g-3">
+        {% for item in group.items %}
+          {% include 'todo/partials/reading_action_item_card.html' with item=item %}
+        {% endfor %}
+      </div>
+    </section>
   {% empty %}
     <p class="text-center mt-3">該当する項目はありません。</p>
   {% endfor %}
-</div>
+{% else %}
+  <div class="list-group">
+    {% for item in action_items %}
+      {% include 'todo/partials/action_item_list_item.html' with item=item %}
+    {% empty %}
+      <p class="text-center mt-3">該当する項目はありません。</p>
+    {% endfor %}
+  </div>
+{% endif %}

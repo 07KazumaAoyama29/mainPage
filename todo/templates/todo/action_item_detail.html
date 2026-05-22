@@ -3,9 +3,18 @@
 {% block header %}
   <h3>{{ action_item.title }}</h3>
   <div class="mt-3 p-3 bg-light rounded">
-    <p class="mb-1"><strong>目標 (Specific):</strong> {{ action_item.text1|default:"(未設定)" }}</p>
-    <p class="mb-1"><strong>測定可能 (Measurable):</strong> {{ action_item.text2|default:"(未設定)" }}</p>
-    <p class="mb-0"><strong>達成可能 (Achievable):</strong> {{ action_item.text3|default:"(未設定)" }}</p>
+    {% if action_item.category and action_item.category.name == '読書' %}
+      <p class="mb-1"><strong>テーマ:</strong> {{ action_item.theme|default:"未設定" }}</p>
+      <p class="mb-1"><strong>作者:</strong> {{ action_item.book_author|default:"未設定" }}</p>
+      <p class="mb-0"><strong>読む目的:</strong> {{ action_item.reading_purpose|default:"未設定"|linebreaksbr }}</p>
+      {% if action_item.book_image %}
+        <img src="{{ action_item.book_image.url }}" alt="{{ action_item.title }}" class="img-fluid rounded mt-3" style="max-height: 320px; object-fit: contain;">
+      {% endif %}
+    {% else %}
+      <p class="mb-1"><strong>目的 (Specific):</strong> {{ action_item.text1|default:"未設定" }}</p>
+      <p class="mb-1"><strong>測定可能 (Measurable):</strong> {{ action_item.text2|default:"未設定" }}</p>
+      <p class="mb-0"><strong>達成可能 (Achievable):</strong> {{ action_item.text3|default:"未設定" }}</p>
+    {% endif %}
   </div>
 {% endblock header %}
 
@@ -32,7 +41,7 @@
     </div>
   {% empty %}
     <div class="alert alert-info">
-      この「やること」はまだスケジュールされていません。
+      このやることはまだスケジュールされていません。
     </div>
   {% endfor %}
 

@@ -1,36 +1,46 @@
 {% extends 'todo/base.html' %}
 
 {% block header %}
-  <div class="d-flex justify-content-between align-items-center">
-    <h3>やることリスト</h3>
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <h3 class="mb-0">やることリスト</h3>
     <button class="btn btn-primary"
-            hx-get="{% url 'todo:action_item_create_form' %}"
-            hx-target="#dialog"  hx-swap="innerHTML"
+            hx-get="{% url 'todo:action_item_create_form' %}?section={{ section_param }}"
+            hx-target="#dialog"
+            hx-swap="innerHTML"
             data-bs-toggle="modal"
             data-bs-target="#modal">
-      <i class="fas fa-plus"></i> 新規作成
+      新規作成
     </button>
   </div>
 
-  <div class="btn-group mt-3" role="group">
-    <button type="button" class="btn btn-outline-primary"
-            hx-get="{% url 'todo:action_item_list' %}?filter=all"
-            hx-target="#action-item-list-container"
-            hx-swap="innerHTML">
+  <div class="btn-group mt-3" role="group" aria-label="完了状態">
+    <a class="btn btn-outline-primary {% if filter_param == 'all' %}active{% endif %}"
+       href="{% url 'todo:action_item_list' %}?section={{ section_param }}&filter=all">
       すべて
-    </button>
-    <button type="button" class="btn btn-outline-primary"
-            hx-get="{% url 'todo:action_item_list' %}?filter=incomplete"
-            hx-target="#action-item-list-container"
-            hx-swap="innerHTML">
+    </a>
+    <a class="btn btn-outline-primary {% if filter_param == 'incomplete' %}active{% endif %}"
+       href="{% url 'todo:action_item_list' %}?section={{ section_param }}&filter=incomplete">
       未完了
-    </button>
-    <button type="button" class="btn btn-outline-primary"
-            hx-get="{% url 'todo:action_item_list' %}?filter=completed"
-            hx-target="#action-item-list-container"
-            hx-swap="innerHTML">
+    </a>
+    <a class="btn btn-outline-primary {% if filter_param == 'completed' %}active{% endif %}"
+       href="{% url 'todo:action_item_list' %}?section={{ section_param }}&filter=completed">
       完了済み
-    </button>
+    </a>
+  </div>
+
+  <div class="btn-group mt-3 ms-md-2" role="group" aria-label="分類">
+    <a class="btn btn-outline-dark {% if section_param == 'todo' %}active{% endif %}"
+       href="{% url 'todo:action_item_list' %}?section=todo&filter={{ filter_param }}">
+      Todo
+    </a>
+    <a class="btn btn-outline-dark {% if section_param == 'reading' %}active{% endif %}"
+       href="{% url 'todo:action_item_list' %}?section=reading&filter={{ filter_param }}">
+      積読
+    </a>
+    <a class="btn btn-outline-dark {% if section_param == 'private' %}active{% endif %}"
+       href="{% url 'todo:action_item_list' %}?section=private&filter={{ filter_param }}">
+      私用
+    </a>
   </div>
 {% endblock header %}
 
@@ -40,5 +50,5 @@
   </div>
   <div id="modal" class="modal fade" tabindex="-1">
     <div id="dialog" class="modal-dialog" hx-target="this"></div>
-</div>
+  </div>
 {% endblock content %}

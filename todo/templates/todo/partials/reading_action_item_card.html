@@ -1,0 +1,49 @@
+<div id="action-item-{{ item.pk }}" class="col-12 col-md-6 col-xl-4">
+  <div class="card h-100 {% if item.completed %}border-info bg-light{% endif %}">
+    <div class="card-body">
+      <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
+        <a href="{% url 'todo:action_item_detail' pk=item.pk %}" class="text-decoration-none {% if item.completed %}text-muted text-decoration-line-through{% else %}text-dark{% endif %}">
+          <h5 class="card-title mb-0">{{ item.title }}</h5>
+        </a>
+        <input class="form-check-input flex-shrink-0" type="checkbox" {% if item.completed %}checked{% endif %}
+               hx-post="{% url 'todo:toggle_action_item' pk=item.pk %}"
+               hx-target="#action-item-{{ item.pk }}"
+               hx-swap="outerHTML">
+      </div>
+
+      {% if item.book_image %}
+        <img src="{{ item.book_image.url }}" alt="{{ item.title }}" class="img-fluid rounded mb-3 w-100" style="max-height: 260px; object-fit: contain; background: #f8f9fa;">
+      {% endif %}
+
+      <p class="card-text mb-3">{{ item.reading_purpose|default:"読む目的は未設定です。"|linebreaksbr }}</p>
+
+      <div class="d-flex flex-wrap gap-2">
+        {% if item.completed %}
+          <span class="badge bg-info">完了</span>
+        {% else %}
+          <span class="badge bg-warning text-dark">未完了</span>
+        {% endif %}
+        {% if item.book_author %}
+          <span class="badge bg-secondary">{{ item.book_author }}</span>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="card-footer bg-transparent d-flex gap-2">
+      <button class="btn btn-sm btn-outline-secondary"
+              hx-get="{% url 'todo:action_item_edit_form' item.pk %}"
+              hx-target="#dialog"
+              hx-swap="innerHTML"
+              data-bs-toggle="modal"
+              data-bs-target="#modal">
+        編集
+      </button>
+      <button class="btn btn-sm btn-outline-danger"
+              hx-post="{% url 'todo:action_item_delete' item.pk %}"
+              hx-confirm="本当に「{{ item.title }}」を削除しますか？"
+              hx-target="body">
+        削除
+      </button>
+    </div>
+  </div>
+</div>

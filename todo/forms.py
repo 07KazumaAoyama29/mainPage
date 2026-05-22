@@ -16,9 +16,7 @@ class ActionCategoryForm(forms.ModelForm):
 class ActionItemForm(forms.ModelForm):
     class Meta:
         model = ActionItem
-        # 1. fields から 'action_type' を削除しました
         fields = ['category', 'title', 'due_date', 'text1', 'text2', 'text3']
-        
         widgets = {
             'category': forms.Select(attrs={'class': 'form-select'}),
             'title': forms.TextInput(attrs={'class': 'form-control'}),
@@ -26,16 +24,45 @@ class ActionItemForm(forms.ModelForm):
             'text1': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
             'text2': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
             'text3': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
-            # 2. widgets からも 'action_type' を削除しました
         }
         labels = {
-            'category': 'カテゴリ（アクション区分）',
+            'category': 'カテゴリ',
             'title': 'タイトル',
-            'due_date': '期日',
-            'text1': '目標 (Specific)',
+            'due_date': '期限',
+            'text1': '目的 (Specific)',
             'text2': '測定可能 (Measurable)',
             'text3': '達成可能 (Achievable)',
-            # 3. labels からも 'action_type' を削除しました
+        }
+
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
+        if user:
+            self.fields['category'].queryset = ActionCategory.objects.filter(owner=user)
+
+
+class PrivateActionItemForm(ActionItemForm):
+    class Meta(ActionItemForm.Meta):
+        fields = ['title', 'due_date', 'text1', 'text2', 'text3']
+
+
+class ReadingActionItemForm(forms.ModelForm):
+    class Meta:
+        model = ActionItem
+        fields = ['title', 'theme', 'reading_purpose', 'book_image', 'book_author']
+        widgets = {
+            'title': forms.TextInput(attrs={'class': 'form-control'}),
+            'theme': forms.TextInput(attrs={'class': 'form-control'}),
+            'reading_purpose': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'book_image': forms.ClearableFileInput(attrs={'class': 'form-control'}),
+            'book_author': forms.TextInput(attrs={'class': 'form-control'}),
+        }
+        labels = {
+            'title': '書籍タイトル',
+            'theme': 'テーマ',
+            'reading_purpose': '読む目的',
+            'book_image': '書籍画像',
+            'book_author': '作者',
         }
 
 class ScheduleForm(forms.ModelForm):

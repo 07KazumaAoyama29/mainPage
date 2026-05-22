@@ -17,6 +17,10 @@ class ActionItem(models.Model):
     category = models.ForeignKey(ActionCategory, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="カテゴリ")
 
     title = models.CharField("タイトル", max_length=100)
+    theme = models.CharField("テーマ", max_length=100, blank=True)
+    reading_purpose = models.TextField("読む目的", blank=True)
+    book_image = models.ImageField("書籍画像", upload_to="todo/book_images/", null=True, blank=True)
+    book_author = models.CharField("作者", max_length=100, blank=True)
     due_date = models.DateField("期日", null=True, blank=True)
     is_scheduled = models.BooleanField("スケジュール済み", default=False)
     owner = models.ForeignKey(User, on_delete=models.CASCADE)

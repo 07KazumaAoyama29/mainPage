@@ -1,6 +1,4 @@
-{# このdiv全体がチェックボックスクリックで置き換えられる #}
 <div id="action-item-{{ item.pk }}" class="list-group-item list-group-item-action d-flex justify-content-between align-items-center {% if item.completed %}list-group-item-light{% endif %}">
-  
   <div class="d-flex align-items-center">
     <input class="form-check-input me-3" type="checkbox" {% if item.completed %}checked{% endif %}
            style="transform: scale(1.5);"
@@ -21,7 +19,7 @@
           <span class="badge bg-secondary">未分類</span>
         {% endif %}
         {% if item.due_date %}
-          <small class="ms-2">期日: {{ item.due_date|date:"Y/m/d" }}</small>
+          <small class="ms-2">期限: {{ item.due_date|date:"Y/m/d" }}</small>
         {% endif %}
       </p>
       {% if item.completed %}
@@ -36,17 +34,18 @@
 
   <div>
     <button class="btn btn-sm btn-outline-secondary"
-        hx-get="{% url 'todo:action_item_edit_form' item.pk %}"
-        hx-target="#dialog"
-        hx-swap="innerHTML"
-        data-bs-toggle="modal" 
-        data-bs-target="#modal">
-    編集
+            hx-get="{% url 'todo:action_item_edit_form' item.pk %}"
+            hx-target="#dialog"
+            hx-swap="innerHTML"
+            data-bs-toggle="modal"
+            data-bs-target="#modal">
+      編集
     </button>
     <button class="btn btn-sm btn-outline-danger"
-        hx-post="{% url 'todo:action_item_delete' item.pk %}"
-        hx-confirm="本当に「{{ item.title }}」を削除しますか？"
-        hx-target="body"> 削除
+            hx-post="{% url 'todo:action_item_delete' item.pk %}"
+            hx-confirm="本当に「{{ item.title }}」を削除しますか？"
+            hx-target="body">
+      削除
     </button>
   </div>
 </div>
