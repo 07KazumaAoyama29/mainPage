@@ -2,7 +2,9 @@
 
 {% block header %}
   <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
-    <h3 class="mb-0">やることリスト</h3>
+    <h3 class="mb-0">
+      {% if section_param == 'reading' %}積読リスト{% else %}やることリスト{% endif %}
+    </h3>
     <button class="btn btn-primary"
             hx-get="{% url 'todo:action_item_create_form' %}?section={{ section_param }}"
             hx-target="#dialog"
