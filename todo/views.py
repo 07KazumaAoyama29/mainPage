@@ -488,6 +488,8 @@ def action_item_list(request):
         action_items = action_items.filter(completed=False)
     else:
         filter_param = 'all'
+        if section_param == 'reading':
+            action_items = action_items.filter(completed=False)
 
     context = {
         'action_items': action_items.order_by('completed', 'due_date', 'pk'),
