@@ -5,8 +5,8 @@ from django.http import HttpResponse
 from django.shortcuts import render, get_object_or_404, redirect
 from django.utils import timezone
 
-from .forms import ReadingNoteForm, AffiliateLinkForm
-from .models import ReadingNote, AffiliateLink
+from .forms import ReadingNoteForm, AffiliateLinkForm, ReadingThemeTagForm
+from .models import ReadingNote, AffiliateLink, ReadingThemeTag
 
 AffiliateLinkFormSet = inlineformset_factory(
     ReadingNote,
@@ -33,7 +33,7 @@ def _format_note_for_export(note):
 
 @login_required
 def note_list(request):
-    notes = ReadingNote.objects.filter(owner=request.user)
+    notes = ReadingNote.objects.filter(owner=request.user).prefetch_related("theme_tags")
 
     status = (request.GET.get("status") or "reading").strip()
     if status and status != "all":
@@ -46,7 +46,8 @@ def note_list(request):
             | Q(author__icontains=q)
             | Q(one_line_summary__icontains=q)
             | Q(reading_purpose__icontains=q)
-        )
+            | Q(theme_tags__name__icontains=q)
+        ).distinct()
 
     sort = request.GET.get("sort", "updated")
     order = request.GET.get("order", "desc")
@@ -95,24 +96,25 @@ def note_export_selected(request):
 
 @login_required
 def note_detail(request, pk):
-    note = get_object_or_404(ReadingNote, pk=pk, owner=request.user)
+    note = get_object_or_404(ReadingNote.objects.prefetch_related("theme_tags", "affiliate_links"), pk=pk, owner=request.user)
     return render(request, "reading_notes/detail.html", {"note": note})
 
 
 @login_required
 def note_create(request):
     if request.method == "POST":
-        form = ReadingNoteForm(request.POST, request.FILES)
+        form = ReadingNoteForm(request.POST, request.FILES, user=request.user)
         formset = AffiliateLinkFormSet(request.POST)
         if form.is_valid() and formset.is_valid():
             note = form.save(commit=False)
             note.owner = request.user
             note.save()
+            form.save_m2m()
             formset.instance = note
             formset.save()
             return redirect("reading_notes:detail", pk=note.pk)
     else:
-        form = ReadingNoteForm()
+        form = ReadingNoteForm(user=request.user)
         formset = AffiliateLinkFormSet(
             initial=[
                 {"kind": AffiliateLink.Kind.AMAZON},
@@ -131,14 +133,14 @@ def note_create(request):
 def note_edit(request, pk):
     note = get_object_or_404(ReadingNote, pk=pk, owner=request.user)
     if request.method == "POST":
-        form = ReadingNoteForm(request.POST, request.FILES, instance=note)
+        form = ReadingNoteForm(request.POST, request.FILES, instance=note, user=request.user)
         formset = AffiliateLinkFormSet(request.POST, instance=note)
         if form.is_valid() and formset.is_valid():
             form.save()
             formset.save()
             return redirect("reading_notes:detail", pk=note.pk)
     else:
-        form = ReadingNoteForm(instance=note)
+        form = ReadingNoteForm(instance=note, user=request.user)
         formset = AffiliateLinkFormSet(instance=note)
 
     return render(
@@ -155,3 +157,45 @@ def note_delete(request, pk):
         note.delete()
         return redirect("reading_notes:list")
     return render(request, "reading_notes/confirm_delete.html", {"note": note})
+
+
+@login_required
+def theme_tag_list(request):
+    tags = ReadingThemeTag.objects.filter(owner=request.user).order_by("name")
+    return render(request, "reading_notes/theme_tag_list.html", {"tags": tags})
+
+
+@login_required
+def theme_tag_create(request):
+    if request.method == "POST":
+        form = ReadingThemeTagForm(request.POST, user=request.user)
+        if form.is_valid():
+            tag = form.save(commit=False)
+            tag.owner = request.user
+            tag.save()
+            return redirect("reading_notes:theme_tag_list")
+    else:
+        form = ReadingThemeTagForm(user=request.user)
+    return render(request, "reading_notes/theme_tag_form.html", {"form": form, "mode": "create"})
+
+
+@login_required
+def theme_tag_edit(request, pk):
+    tag = get_object_or_404(ReadingThemeTag, pk=pk, owner=request.user)
+    if request.method == "POST":
+        form = ReadingThemeTagForm(request.POST, instance=tag, user=request.user)
+        if form.is_valid():
+            form.save()
+            return redirect("reading_notes:theme_tag_list")
+    else:
+        form = ReadingThemeTagForm(instance=tag, user=request.user)
+    return render(request, "reading_notes/theme_tag_form.html", {"form": form, "mode": "edit", "tag": tag})
+
+
+@login_required
+def theme_tag_delete(request, pk):
+    tag = get_object_or_404(ReadingThemeTag, pk=pk, owner=request.user)
+    if request.method == "POST":
+        tag.delete()
+        return redirect("reading_notes:theme_tag_list")
+    return render(request, "reading_notes/theme_tag_confirm_delete.html", {"tag": tag})

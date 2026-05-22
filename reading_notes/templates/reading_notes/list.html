@@ -4,7 +4,10 @@
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h1 class="h3 mb-0">&#x8AAD;&#x66F8;&#x30E1;&#x30E2;&#x4E00;&#x89A7;</h1>
-    <a class="btn btn-primary" href="{% url 'reading_notes:create' %}">&#x65B0;&#x898F;&#x4F5C;&#x6210;</a>
+    <div class="d-flex gap-2">
+        <a class="btn btn-outline-secondary" href="{% url 'reading_notes:theme_tag_list' %}">&#x30C6;&#x30FC;&#x30DE;&#x30BF;&#x30B0;&#x7BA1;&#x7406;</a>
+        <a class="btn btn-primary" href="{% url 'reading_notes:create' %}">&#x65B0;&#x898F;&#x4F5C;&#x6210;</a>
+    </div>
 </div>
 
 <form class="row g-2 mb-3" method="get">
@@ -48,6 +51,7 @@
             <tr>
                 <th></th>
                 <th>&#x30BF;&#x30A4;&#x30C8;&#x30EB;</th>
+                <th>&#x30C6;&#x30FC;&#x30DE;</th>
                 <th>&#x30B9;&#x30C6;&#x30FC;&#x30BF;&#x30B9;</th>
                 <th>&#x304A;&#x3059;&#x3059;&#x3081;&#x5EA6;</th>
                 <th>&#x8AAD;&#x4E86;&#x65E5;</th>
@@ -62,6 +66,17 @@
                     <input class="form-check-input" type="checkbox" name="note_ids" value="{{ note.pk }}">
                 </td>
                 <td><a href="{% url 'reading_notes:detail' note.pk %}">{{ note.title }}</a></td>
+                <td>
+                    {% for tag in note.theme_tags.all %}
+                        {% if tag.knowledge_url %}
+                            <a class="badge text-bg-info text-decoration-none me-1" href="{{ tag.knowledge_url }}" target="_blank" rel="noopener noreferrer">{{ tag.name }}</a>
+                        {% else %}
+                            <span class="badge text-bg-secondary me-1">{{ tag.name }}</span>
+                        {% endif %}
+                    {% empty %}
+                        -
+                    {% endfor %}
+                </td>
                 <td>{{ note.get_status_display }}</td>
                 <td>{% if note.rating %}{{ note.rating }}{% else %}-{% endif %}</td>
                 <td>{% if note.finished_at %}{{ note.finished_at }}{% else %}-{% endif %}</td>
@@ -72,7 +87,7 @@
             </tr>
         {% empty %}
             <tr>
-                <td colspan="7" class="text-center text-muted">&#x30E1;&#x30E2;&#x304C;&#x307E;&#x3060;&#x3042;&#x308A;&#x307E;&#x305B;&#x3093;</td>
+                <td colspan="8" class="text-center text-muted">&#x30E1;&#x30E2;&#x304C;&#x307E;&#x3060;&#x3042;&#x308A;&#x307E;&#x305B;&#x3093;</td>
             </tr>
         {% endfor %}
         </tbody>

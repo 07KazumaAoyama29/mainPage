@@ -3,6 +3,23 @@ from django.contrib.auth.models import User
 from django.core.validators import MinValueValidator, MaxValueValidator
 
 
+class ReadingThemeTag(models.Model):
+    owner = models.ForeignKey(User, on_delete=models.CASCADE)
+    name = models.CharField("\u30bf\u30b0\u540d", max_length=100)
+    knowledge_url = models.URLField("Knowledge Base URL", max_length=500, blank=True)
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        verbose_name = "Reading Theme Tag"
+        verbose_name_plural = "Reading Theme Tags"
+        ordering = ["name"]
+        constraints = [
+            models.UniqueConstraint(fields=["owner", "name"], name="unique_reading_theme_tag_per_owner"),
+        ]
+
+
 class ReadingNote(models.Model):
     class Category(models.TextChoices):
         NOVEL = "novel", "小説"
@@ -35,7 +52,8 @@ class ReadingNote(models.Model):
     cover_image = models.ImageField("画像", upload_to="reading_notes/covers/", blank=True, null=True)
 
     one_line_summary = models.CharField("一言要約", max_length=300, blank=True)
-    reading_purpose = models.TextField("この本を読む目的・テーマ", blank=True)
+    reading_purpose = models.TextField("\u3053\u306e\u672c\u3092\u8aad\u3080\u76ee\u7684", blank=True)
+    theme_tags = models.ManyToManyField(ReadingThemeTag, blank=True, related_name="reading_notes", verbose_name="\u30c6\u30fc\u30de\u30bf\u30b0")
     impression_during = models.TextField("読書中の感想", blank=True)
     impression_after = models.TextField("読了後の感想", blank=True)
     comparison_notes = models.TextField("他作品と比べた感想", blank=True)

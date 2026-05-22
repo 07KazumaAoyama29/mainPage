@@ -1,0 +1,14 @@
+{% extends 'reading_notes/base.html' %}
+{% block title %}&#x30C6;&#x30FC;&#x30DE;&#x30BF;&#x30B0;&#x524A;&#x9664;{% endblock %}
+
+{% block content %}
+<h1 class="h3">&#x30C6;&#x30FC;&#x30DE;&#x30BF;&#x30B0;&#x524A;&#x9664;</h1>
+<p>&#x300C;{{ tag.name }}&#x300D;&#x3092;&#x524A;&#x9664;&#x3057;&#x307E;&#x3059;&#x304B;&#xFF1F;</p>
+<p class="text-muted small">&#x30BF;&#x30B0;&#x3092;&#x524A;&#x9664;&#x3057;&#x3066;&#x3082;&#x3001;&#x8AAD;&#x66F8;&#x30E1;&#x30E2;&#x672C;&#x4F53;&#x306F;&#x524A;&#x9664;&#x3055;&#x308C;&#x307E;&#x305B;&#x3093;&#x3002;</p>
+
+<form method="post">
+    {% csrf_token %}
+    <button class="btn btn-danger" type="submit">&#x524A;&#x9664;</button>
+    <a class="btn btn-secondary" href="{% url 'reading_notes:theme_tag_list' %}">&#x30AD;&#x30E3;&#x30F3;&#x30BB;&#x30EB;</a>
+</form>
+{% endblock %}

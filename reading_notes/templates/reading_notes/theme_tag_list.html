@@ -1,0 +1,46 @@
+{% extends 'reading_notes/base.html' %}
+{% block title %}&#x30C6;&#x30FC;&#x30DE;&#x30BF;&#x30B0;&#x7BA1;&#x7406;{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="h3 mb-0">&#x30C6;&#x30FC;&#x30DE;&#x30BF;&#x30B0;&#x7BA1;&#x7406;</h1>
+    <div class="d-flex gap-2">
+        <a class="btn btn-outline-secondary" href="{% url 'reading_notes:list' %}">&#x8AAD;&#x66F8;&#x30E1;&#x30E2;&#x4E00;&#x89A7;</a>
+        <a class="btn btn-primary" href="{% url 'reading_notes:theme_tag_create' %}">&#x65B0;&#x898F;&#x4F5C;&#x6210;</a>
+    </div>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-striped align-middle">
+        <thead>
+            <tr>
+                <th>&#x30BF;&#x30B0;&#x540D;</th>
+                <th>Knowledge Base URL</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for tag in tags %}
+                <tr>
+                    <td>{{ tag.name }}</td>
+                    <td>
+                        {% if tag.knowledge_url %}
+                            <a href="{{ tag.knowledge_url }}" target="_blank" rel="noopener noreferrer">{{ tag.knowledge_url }}</a>
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    <td class="text-end">
+                        <a class="btn btn-sm btn-outline-secondary" href="{% url 'reading_notes:theme_tag_edit' tag.pk %}">&#x7DE8;&#x96C6;</a>
+                        <a class="btn btn-sm btn-outline-danger" href="{% url 'reading_notes:theme_tag_delete' tag.pk %}">&#x524A;&#x9664;</a>
+                    </td>
+                </tr>
+            {% empty %}
+                <tr>
+                    <td colspan="3" class="text-center text-muted">&#x30C6;&#x30FC;&#x30DE;&#x30BF;&#x30B0;&#x304C;&#x307E;&#x3060;&#x3042;&#x308A;&#x307E;&#x305B;&#x3093;</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
