@@ -43,6 +43,21 @@ class PeriodicTask(models.Model):
     def __str__(self):
         return self.title
 
+
+class DailyRoutineTask(models.Model):
+    title = models.CharField("タスク名", max_length=200)
+    active = models.BooleanField("有効", default=True)
+    position = models.IntegerField("表示順", default=0)
+    owner = models.ForeignKey(User, on_delete=models.CASCADE)
+    created_at = models.DateTimeField("作成日", auto_now_add=True)
+    updated_at = models.DateTimeField("更新日", auto_now=True)
+
+    def __str__(self):
+        return self.title
+
+    class Meta:
+        ordering = ["position", "id"]
+
 # --- 2. 既存の「スケジュール」モデルの変更 ---
 class Schedule(models.Model):
     action_category = models.ForeignKey(
@@ -86,7 +101,24 @@ class Task(models.Model):
     completed = models.BooleanField("完了フラグ", default=False)
     owner = models.ForeignKey(User, on_delete=models.CASCADE)
     schedule = models.ForeignKey(Schedule, on_delete=models.CASCADE, related_name='tasks')
+    daily_routine = models.ForeignKey(
+        DailyRoutineTask,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="generated_tasks",
+        verbose_name="毎日のルーティーン",
+    )
     position = models.IntegerField("表示順", default=0)
 
     def __str__(self):
         return self.title
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["schedule", "daily_routine"],
+                condition=models.Q(daily_routine__isnull=False),
+                name="unique_daily_routine_task_per_schedule",
+            ),
+        ]

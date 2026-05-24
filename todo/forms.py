@@ -1,5 +1,5 @@
 from django import forms
-from .models import Schedule, Task, ActionItem, ActionCategory
+from .models import Schedule, Task, ActionItem, ActionCategory, DailyRoutineTask
 
 class ActionCategoryForm(forms.ModelForm):
     class Meta:
@@ -104,4 +104,20 @@ class TaskForm(forms.ModelForm):
                 'class': 'form-control',
                 'placeholder': '新しいタスクを入力してください'
             }),
+        }
+
+
+class DailyRoutineTaskForm(forms.ModelForm):
+    class Meta:
+        model = DailyRoutineTask
+        fields = ['title', 'active', 'position']
+        labels = {
+            'title': 'タスク名',
+            'active': '有効',
+            'position': '表示順',
+        }
+        widgets = {
+            'title': forms.TextInput(attrs={'class': 'form-control', 'placeholder': '例: 日記を書く'}),
+            'active': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'position': forms.NumberInput(attrs={'class': 'form-control', 'min': 0}),
         }

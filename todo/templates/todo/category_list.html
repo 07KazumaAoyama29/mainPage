@@ -1,66 +1,224 @@
-{% extends "todo/base.html" %} {% block content %}
-<div class="container mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h2>アクションリスト（カテゴリ）管理</h2>
-<button class="btn btn-primary"
-        hx-get="{% url 'todo:category_create_form' %}"
-        hx-target="#dialog"
-        hx-swap="innerHTML"
-        data-bs-toggle="modal"
-        data-bs-target="#modal">
-    ＋ 新規作成
-</button>
-    </div>
+{% extends "todo/base.html" %}
 
+{% block content %}
+<div class="container mt-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="mb-0">管理</h2>
+    <a href="{% url 'todo:calendar' %}" class="btn btn-secondary">カレンダーに戻る</a>
+  </div>
+
+  <section class="mb-4">
     <div class="card">
-        <div class="card-body">
-            <table class="table table-hover align-middle">
-                <thead>
-                    <tr>
-                        <th style="width: 50px;">色</th>
-                        <th>カテゴリ名</th>
-                        <th style="width: 150px;" class="text-end">操作</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for category in categories %}
-                    <tr>
-                        <td>
-                            <span style="display:inline-block; width:20px; height:20px; background-color:{{ category.color }}; border-radius:50%; border:1px solid #ccc;"></span>
-                        </td>
-                        <td>{{ category.name }}</td>
-                        <td class="text-end">
-                            <button class="btn btn-sm btn-outline-secondary me-1"
-        hx-get="{% url 'todo:category_edit_form' category.pk %}"
-        hx-target="#dialog"
-        hx-swap="innerHTML"
-        data-bs-toggle="modal"
-        data-bs-target="#modal">
-    編集
-</button>
-                            <button class="btn btn-sm btn-outline-danger"
-                                    hx-post="{% url 'todo:category_delete' category.pk %}"
-                                    hx-confirm="本当に「{{ category.name }}」を削除しますか？\n（紐付いているスケジュールは未分類になります）">
-                                削除
-                            </button>
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="3" class="text-center text-muted py-4">カテゴリがまだありません</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <h3 class="h5 mb-0">カテゴリ</h3>
+          <button class="btn btn-primary"
+                  hx-get="{% url 'todo:category_create_form' %}"
+                  hx-target="#dialog"
+                  hx-swap="innerHTML"
+                  data-bs-toggle="modal"
+                  data-bs-target="#modal">
+            新規作成
+          </button>
         </div>
+
+        <div class="table-responsive">
+          <table class="table table-hover align-middle">
+            <thead>
+              <tr>
+                <th style="width: 50px;">色</th>
+                <th>カテゴリ名</th>
+                <th style="width: 150px;" class="text-end">操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for category in categories %}
+                <tr>
+                  <td>
+                    <span style="display:inline-block; width:20px; height:20px; background-color:{{ category.color }}; border-radius:50%; border:1px solid #ccc;"></span>
+                  </td>
+                  <td>{{ category.name }}</td>
+                  <td class="text-end">
+                    <button class="btn btn-sm btn-outline-secondary me-1"
+                            hx-get="{% url 'todo:category_edit_form' category.pk %}"
+                            hx-target="#dialog"
+                            hx-swap="innerHTML"
+                            data-bs-toggle="modal"
+                            data-bs-target="#modal">
+                      編集
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger"
+                            hx-post="{% url 'todo:category_delete' category.pk %}"
+                            hx-confirm="本当に「{{ category.name }}」を削除しますか？関連するスケジュールは未分類になります。">
+                      削除
+                    </button>
+                  </td>
+                </tr>
+              {% empty %}
+                <tr>
+                  <td colspan="3" class="text-center text-muted py-4">カテゴリがまだありません。</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
-    
-    <div class="mt-3">
-        <a href="{% url 'todo:calendar' %}" class="btn btn-secondary">カレンダーに戻る</a>
+  </section>
+
+  <section class="mb-4">
+    <div class="card">
+      <div class="card-body">
+        <h3 class="h5 mb-3">毎日のルーティーン</h3>
+        <form method="post" action="{% url 'todo:daily_routine_create' %}" class="row g-2 align-items-end">
+          {% csrf_token %}
+          <div class="col-md-6">
+            <label class="form-label">タスク名</label>
+            {{ daily_routine_form.title }}
+          </div>
+          <div class="col-md-2">
+            <label class="form-label">表示順</label>
+            {{ daily_routine_form.position }}
+          </div>
+          <div class="col-md-2">
+            <div class="form-check mb-2">
+              {{ daily_routine_form.active }}
+              <label class="form-check-label" for="{{ daily_routine_form.active.id_for_label }}">有効</label>
+            </div>
+          </div>
+          <div class="col-md-2">
+            <button class="btn btn-outline-primary w-100" type="submit">追加</button>
+          </div>
+        </form>
+
+        <div class="mt-3">
+          {% if daily_routines %}
+            <div class="list-group">
+              {% for routine in daily_routines %}
+                <div class="list-group-item">
+                  <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <div>
+                      <div class="fw-bold {% if not routine.active %}text-muted{% endif %}">{{ routine.title }}</div>
+                      <div class="small text-muted">
+                        表示順: {{ routine.position }} / {% if routine.active %}有効{% else %}無効{% endif %}
+                      </div>
+                    </div>
+                    <div class="d-flex align-items-center gap-2">
+                      <details>
+                        <summary class="btn btn-sm btn-outline-secondary">編集</summary>
+                        <form method="post" action="{% url 'todo:daily_routine_update' routine.id %}" class="mt-2">
+                          {% csrf_token %}
+                          <div class="mb-2">
+                            <label class="form-label small mb-1">タスク名</label>
+                            <input type="text" name="title" class="form-control form-control-sm" value="{{ routine.title }}" required>
+                          </div>
+                          <div class="mb-2">
+                            <label class="form-label small mb-1">表示順</label>
+                            <input type="number" name="position" class="form-control form-control-sm" value="{{ routine.position }}" min="0">
+                          </div>
+                          <div class="form-check mb-2">
+                            <input type="checkbox" name="active" class="form-check-input" id="routine-active-{{ routine.id }}" {% if routine.active %}checked{% endif %}>
+                            <label class="form-check-label" for="routine-active-{{ routine.id }}">有効</label>
+                          </div>
+                          <button class="btn btn-sm btn-primary w-100" type="submit">更新</button>
+                        </form>
+                      </details>
+                      <form method="post" action="{% url 'todo:daily_routine_delete' routine.id %}">
+                        {% csrf_token %}
+                        <button class="btn btn-sm btn-outline-danger" type="submit">削除</button>
+                      </form>
+                    </div>
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <div class="text-muted small">毎日のルーティーンはまだありません。</div>
+          {% endif %}
+        </div>
+      </div>
     </div>
+  </section>
+
+  <section class="mb-4">
+    <div class="card">
+      <div class="card-body">
+        <h3 class="h5 mb-3">定期タスク</h3>
+        <form method="post" action="{% url 'todo:periodic_task_create' %}" class="row g-2 align-items-end">
+          {% csrf_token %}
+          <div class="col-md-4">
+            <label class="form-label">タスク名</label>
+            <input type="text" name="title" class="form-control" placeholder="例: 散髪" required>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">間隔(日)</label>
+            <input type="number" name="interval_days" class="form-control" value="30" min="1">
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">前回実施日</label>
+            <input type="date" name="last_done" class="form-control">
+          </div>
+          <div class="col-md-2">
+            <button class="btn btn-outline-primary w-100" type="submit">追加</button>
+          </div>
+        </form>
+
+        <div class="mt-3">
+          {% if periodic_tasks %}
+            <div class="list-group">
+              {% for item in periodic_tasks %}
+                <div class="list-group-item d-flex justify-content-between align-items-center flex-wrap gap-2">
+                  <div>
+                    <div class="fw-bold {% if item.is_overdue %}text-danger{% endif %}">{{ item.title }}</div>
+                    <div class="small {% if item.is_overdue %}text-danger{% else %}text-muted{% endif %}">
+                      間隔: {{ item.interval_days }}日
+                      / 前回: {% if item.last_done %}{{ item.last_done }}{% else %}未実施{% endif %}
+                      / 経過: {{ item.days_display }}
+                    </div>
+                  </div>
+                  <div class="d-flex align-items-center gap-2">
+                    {% if item.is_overdue %}
+                      <span class="badge bg-danger">超過</span>
+                    {% else %}
+                      <span class="badge bg-success">OK</span>
+                    {% endif %}
+                    <details>
+                      <summary class="btn btn-sm btn-outline-secondary">編集</summary>
+                      <form method="post" action="{% url 'todo:periodic_task_update' item.id %}" class="mt-2">
+                        {% csrf_token %}
+                        <div class="mb-2">
+                          <label class="form-label small mb-1">タスク名</label>
+                          <input type="text" name="title" class="form-control form-control-sm" value="{{ item.title }}" required>
+                        </div>
+                        <div class="mb-2">
+                          <label class="form-label small mb-1">間隔(日)</label>
+                          <input type="number" name="interval_days" class="form-control form-control-sm" value="{{ item.interval_days }}" min="1" required>
+                        </div>
+                        <div class="mb-2">
+                          <label class="form-label small mb-1">前回実施日</label>
+                          <input type="date" name="last_done" class="form-control form-control-sm" value="{% if item.last_done %}{{ item.last_done|date:'Y-m-d' }}{% endif %}">
+                        </div>
+                        <button class="btn btn-sm btn-primary w-100" type="submit">更新</button>
+                      </form>
+                    </details>
+                    <form method="post" action="{% url 'todo:periodic_task_done' item.id %}">
+                      {% csrf_token %}
+                      <button class="btn btn-sm btn-outline-success">完了</button>
+                    </form>
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+          {% else %}
+            <div class="text-muted small">定期タスクがまだありません。</div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </section>
 </div>
 
 <div id="modal" class="modal fade" tabindex="-1">
-    <div id="dialog" class="modal-dialog" hx-target="this"></div>
+  <div id="dialog" class="modal-dialog" hx-target="this"></div>
 </div>
 {% endblock %}

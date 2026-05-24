@@ -4,13 +4,13 @@ from django.contrib.auth.models import User
 from django.http import JsonResponse, HttpResponse
 from django.urls import reverse_lazy, reverse
 from django.views.decorators.http import require_POST
-from django.db.models import Q, Sum
+from django.db.models import Max, Q, Sum
 from django.utils import timezone
 
 from datetime import datetime, timedelta, date
 
-from .models import Schedule, Task, ActionItem, ActionCategory, PeriodicTask
-from .forms import ScheduleForm, TaskForm, ActionItemForm, PrivateActionItemForm, ReadingActionItemForm, ActionCategoryForm
+from .models import Schedule, Task, ActionItem, ActionCategory, PeriodicTask, DailyRoutineTask
+from .forms import ScheduleForm, TaskForm, ActionItemForm, PrivateActionItemForm, ReadingActionItemForm, ActionCategoryForm, DailyRoutineTaskForm
 
 import json
 import calendar
@@ -116,6 +116,31 @@ def _get_or_create_today_schedule(user):
         end_time=end_time,
     )
 
+
+def _sync_daily_routine_tasks(user, schedule):
+    routines = DailyRoutineTask.objects.filter(owner=user, active=True).order_by('position', 'id')
+    existing_routine_ids = set(
+        schedule.tasks.filter(daily_routine__isnull=False).values_list('daily_routine_id', flat=True)
+    )
+    next_position = (schedule.tasks.aggregate(max_position=Max('position'))['max_position'] or 0) + 1
+
+    new_tasks = []
+    for routine in routines:
+        if routine.id in existing_routine_ids:
+            continue
+        new_tasks.append(Task(
+            title=routine.title,
+            owner=user,
+            schedule=schedule,
+            daily_routine=routine,
+            position=next_position,
+        ))
+        next_position += 1
+
+    if new_tasks:
+        Task.objects.bulk_create(new_tasks)
+
+
 @login_required
 def calendar_view(request):
     """カレンダーページ"""
@@ -125,6 +150,7 @@ def calendar_view(request):
 @login_required
 def today_tasks_setup(request):
     schedule = _get_or_create_today_schedule(request.user)
+    _sync_daily_routine_tasks(request.user, schedule)
 
     if request.method == 'POST':
         form = TaskForm(data=request.POST)
@@ -154,6 +180,36 @@ def today_tasks_setup(request):
         'periodic_tasks': _build_periodic_task_items(request.user),
     }
     return render(request, 'todo/today_setup.html', context)
+
+
+@login_required
+@require_POST
+def daily_routine_create(request):
+    form = DailyRoutineTaskForm(request.POST)
+    if form.is_valid():
+        routine = form.save(commit=False)
+        routine.owner = request.user
+        routine.save()
+    return redirect(request.META.get('HTTP_REFERER', reverse('todo:today_tasks_setup')))
+
+
+@login_required
+@require_POST
+def daily_routine_update(request, pk):
+    routine = get_object_or_404(DailyRoutineTask, pk=pk, owner=request.user)
+    form = DailyRoutineTaskForm(request.POST, instance=routine)
+    if form.is_valid():
+        form.save()
+    return redirect(request.META.get('HTTP_REFERER', reverse('todo:today_tasks_setup')))
+
+
+@login_required
+@require_POST
+def daily_routine_delete(request, pk):
+    routine = get_object_or_404(DailyRoutineTask, pk=pk, owner=request.user)
+    routine.delete()
+    return redirect(request.META.get('HTTP_REFERER', reverse('todo:today_tasks_setup')))
+
 
 @login_required
 def calendar_events(request):
@@ -630,7 +686,12 @@ def task_delete(request, pk):
 def category_list(request):
     """カテゴリの一覧ページ"""
     categories = ActionCategory.objects.filter(owner=request.user).order_by('id')
-    context = {'categories': categories}
+    context = {
+        'categories': categories,
+        'periodic_tasks': _build_periodic_task_items(request.user),
+        'daily_routines': DailyRoutineTask.objects.filter(owner=request.user).order_by('position', 'id'),
+        'daily_routine_form': DailyRoutineTaskForm(),
+    }
     return render(request, 'todo/category_list.html', context)
 
 @login_required
