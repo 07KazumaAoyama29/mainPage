@@ -23,6 +23,17 @@
         </div>
       </div>
     </div>
+
+    <div class="mb-3 border rounded p-3">
+      <label class="form-label" for="id_knowledge_image">画像をアップロード</label>
+      <div class="input-group">
+        {{ image_form.image }}
+        <button type="button" class="btn btn-outline-primary" id="uploadKnowledgeImage">アップロードして挿入</button>
+      </div>
+      <div class="form-text">アップロード後、本文のカーソル位置にMarkdown画像記法を挿入します。</div>
+      <div id="imageUploadStatus" class="small mt-2"></div>
+    </div>
+
     <div class="mb-3">
       {{ form.tags.label_tag }}
       <div>{{ form.tags }}</div>
@@ -75,6 +86,66 @@
 
       knowledgeType.addEventListener('change', toggleFields);
       toggleFields();
+
+      const imageInput = document.getElementById('id_image');
+      const uploadButton = document.getElementById('uploadKnowledgeImage');
+      const uploadStatus = document.getElementById('imageUploadStatus');
+      const contentInput = document.getElementById('id_content');
+
+      function insertAtCursor(textarea, text) {
+        const start = textarea.selectionStart || 0;
+        const end = textarea.selectionEnd || 0;
+        const current = textarea.value;
+        const prefix = current.slice(0, start);
+        const suffix = current.slice(end);
+        const needsLeadingNewline = prefix && !prefix.endsWith('\n') ? '\n' : '';
+        const needsTrailingNewline = suffix && !suffix.startsWith('\n') ? '\n' : '';
+        const insertText = `${needsLeadingNewline}${text}${needsTrailingNewline}`;
+        textarea.value = prefix + insertText + suffix;
+        const cursor = prefix.length + insertText.length;
+        textarea.focus();
+        textarea.setSelectionRange(cursor, cursor);
+        textarea.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+
+      if (uploadButton && imageInput && contentInput) {
+        uploadButton.addEventListener('click', async function() {
+          if (!imageInput.files || !imageInput.files[0]) {
+            uploadStatus.textContent = '画像ファイルを選択してください。';
+            uploadStatus.className = 'small mt-2 text-danger';
+            return;
+          }
+
+          const formData = new FormData();
+          formData.append('image', imageInput.files[0]);
+          uploadButton.disabled = true;
+          uploadStatus.textContent = 'アップロード中...';
+          uploadStatus.className = 'small mt-2 text-muted';
+
+          try {
+            const response = await fetch("{% url 'learning_logs:upload_knowledge_image' pk=knowledge.pk %}", {
+              method: 'POST',
+              headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+              },
+              body: formData
+            });
+            const data = await response.json();
+            if (!response.ok || !data.ok) {
+              throw new Error('upload failed');
+            }
+            insertAtCursor(contentInput, data.markdown);
+            imageInput.value = '';
+            uploadStatus.textContent = '画像を挿入しました。保存すると本文に反映されます。';
+            uploadStatus.className = 'small mt-2 text-success';
+          } catch (error) {
+            uploadStatus.textContent = '画像のアップロードに失敗しました。';
+            uploadStatus.className = 'small mt-2 text-danger';
+          } finally {
+            uploadButton.disabled = false;
+          }
+        });
+      }
     });
   </script>
   {% include "learning_logs/partials/markdown_preview.html" %}

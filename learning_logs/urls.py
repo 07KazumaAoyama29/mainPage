@@ -33,6 +33,7 @@ urlpatterns = [
     path('comment/delete/<int:comment_id>/', views.delete_comment, name='delete_comment'),
     # 邱ｨ髮・・繝ｼ繧ｸ逕ｨ縺ｮ繝代せ
     path('edit/<int:pk>/', views.edit_knowledge, name='edit_knowledge'),
+    path('edit/<int:pk>/upload-image/', views.upload_knowledge_image, name='upload_knowledge_image'),
     # 蜑企勁繝壹・繧ｸ逕ｨ縺ｮ繝代せ
     path('delete/<int:pk>/', views.delete_knowledge, name='delete_knowledge'),
     # 繝ｦ繝ｼ繧ｶ繝ｼ繝励Ο繝輔ぅ繝ｼ繝ｫ繝壹・繧ｸ逕ｨ繝代せ

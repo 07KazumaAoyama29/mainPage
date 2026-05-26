@@ -3,11 +3,12 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
 from .models import Knowledge, Tag, Comment
-from .forms import KnowledgeForm , CommentForm, TagForm
-from django.http import Http404, HttpResponse
+from .forms import KnowledgeForm , CommentForm, TagForm, KnowledgeImageForm
+from django.http import Http404, HttpResponse, JsonResponse
 from django import forms
 
 import markdown
+from urllib.parse import quote
 
 
 def _safe_markdown_filename(title, max_len=50):
@@ -142,8 +143,37 @@ def edit_knowledge(request, pk):
     else:
         form = KnowledgeForm(instance=knowledge)
         
-    context = {'knowledge': knowledge, 'form': form}
+    context = {
+        'knowledge': knowledge,
+        'form': form,
+        'image_form': KnowledgeImageForm(),
+        'images': knowledge.images.order_by('-uploaded_at'),
+    }
     return render(request, 'learning_logs/edit_knowledge.html', context)
+
+
+@login_required
+def upload_knowledge_image(request, pk):
+    knowledge = get_object_or_404(Knowledge, pk=pk)
+    check_knowledge_owner(request, knowledge)
+
+    if request.method != 'POST':
+        raise Http404
+
+    form = KnowledgeImageForm(request.POST, request.FILES)
+    if not form.is_valid():
+        return JsonResponse({'ok': False, 'errors': form.errors}, status=400)
+
+    image = form.save(commit=False)
+    image.knowledge = knowledge
+    image.save()
+    image_url = image.image.url
+    markdown_text = f"![画像]({image_url})"
+    return JsonResponse({
+        'ok': True,
+        'url': image_url,
+        'markdown': markdown_text,
+    })
 
 def delete_knowledge(request, pk):
     """知識を削除する"""
@@ -289,8 +319,12 @@ def export_knowledge_markdown(request, knowledge_id):
         raise Http404
 
     filename = f"{_safe_markdown_filename(knowledge.title)}.md"
-    response = HttpResponse(knowledge.content, content_type="text/markdown; charset=utf-8")
-    response["Content-Disposition"] = f'attachment; filename="{filename}"'
+    encoded_filename = quote(filename)
+    response = HttpResponse(knowledge.content, content_type="application/octet-stream")
+    response["Content-Disposition"] = (
+        f"attachment; filename=\"note.md\"; filename*=UTF-8''{encoded_filename}"
+    )
+    response["X-Content-Type-Options"] = "nosniff"
     return response
 
 

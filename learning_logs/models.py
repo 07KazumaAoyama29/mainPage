@@ -58,3 +58,16 @@ class Knowledge(models.Model):
 
     class Meta:
         verbose_name_plural = "Knowledge"
+
+
+class KnowledgeImage(models.Model):
+    knowledge = models.ForeignKey(
+        Knowledge,
+        on_delete=models.CASCADE,
+        related_name='images',
+    )
+    image = models.ImageField("画像", upload_to="learning_logs/images/")
+    uploaded_at = models.DateTimeField("アップロード日時", auto_now_add=True)
+
+    def __str__(self):
+        return f"Image for {self.knowledge.title}"

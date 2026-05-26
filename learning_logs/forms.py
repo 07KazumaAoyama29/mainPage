@@ -1,6 +1,6 @@
 from django import forms
 
-from .models import Comment, Knowledge, Tag
+from .models import Comment, Knowledge, KnowledgeImage, Tag
 
 
 class KnowledgeForm(forms.ModelForm):
@@ -60,3 +60,12 @@ class TagForm(forms.ModelForm):
         model = Tag
         fields = ['name']
         labels = {'name': 'タグ名'}
+
+class KnowledgeImageForm(forms.ModelForm):
+    class Meta:
+        model = KnowledgeImage
+        fields = ['image']
+        labels = {'image': '\u753b\u50cf'}
+        widgets = {
+            'image': forms.ClearableFileInput(attrs={'class': 'form-control', 'accept': 'image/*'}),
+        }
