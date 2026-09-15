@@ -11,6 +11,7 @@
     const roster = element("roster");
     const prepareButton = element("prepare-button");
     const drawButton = element("draw-button");
+    const revealButton = element("reveal-button");
     const copyButton = element("copy-button");
     const board = element("room-board");
     const drawStatus = element("draw-status");
@@ -25,7 +26,7 @@
     const requestTimeout = 15000;
     const timers = new Set();
     const animationTimers = new Set();
-    const state = { busy: false, participants: [], result: null, operation: 0 };
+    const state = { busy: false, participants: [], result: null, revealedCount: 0, operation: 0 };
     let activeRequest = null;
     let finishAnimation = null;
 
@@ -69,6 +70,11 @@
     function setBusy(busy) {
         state.busy = busy;
         app.querySelectorAll("button").forEach((button) => { button.disabled = busy; });
+        const pending = hasUnrevealedRooms();
+        drawButton.disabled = busy || pending;
+        revealButton.disabled = busy || !pending;
+        copyButton.disabled = busy || !state.result || pending;
+        element("edit-button").disabled = busy || pending;
         roster.readOnly = busy;
         form.setAttribute("aria-busy", String(busy));
         navigationLinks.forEach((link) => {
@@ -248,12 +254,37 @@
         card.status.textContent = "確定";
     }
 
-    function renderResult(rooms) {
-        rooms.forEach((room, index) => revealRoom(room, index));
+    function hasUnrevealedRooms() {
+        return Boolean(state.result && state.revealedCount < state.result.length);
+    }
+
+    function updatePresentation() {
+        const pending = hasUnrevealedRooms();
         board.setAttribute("aria-busy", "false");
-        presentationTitle.textContent = "部屋割りの結果";
-        drawStatus.textContent = "全員の部屋割りが決まりました。";
-        copyButton.hidden = false;
+        drawButton.hidden = pending;
+        drawButton.textContent = state.result ? "全員を再抽選" : "抽選開始";
+        revealButton.hidden = !pending;
+        copyButton.hidden = !state.result || pending;
+        if (pending) {
+            const nextRoom = state.result[state.revealedCount];
+            revealButton.textContent = `${nextRoom.name}を発表`;
+            presentationTitle.textContent = "部屋割りの発表";
+            drawStatus.textContent = `${state.revealedCount} / ${state.result.length}部屋を発表済みです。「${nextRoom.name}を発表」を押してください。`;
+        } else {
+            presentationTitle.textContent = state.result ? "部屋割りの結果" : "部屋割り抽選";
+            drawStatus.textContent = state.result
+                ? "全員の部屋割りが決まりました。"
+                : "準備ができました。「抽選開始」を押してください。";
+        }
+    }
+
+    function restorePresentation() {
+        resetBoard(state.result ? "発表待ち" : "待機中");
+        // Restore only rooms the operator has already announced, including on page return.
+        if (state.result) {
+            state.result.slice(0, state.revealedCount).forEach((room, index) => revealRoom(room, index));
+        }
+        updatePresentation();
     }
 
     function scheduleAnimation(callback, delay) {
@@ -265,14 +296,13 @@
         return timer;
     }
 
-    function animateResult(rooms) {
-        resetBoard("発表待ち");
+    function animateShuffle() {
+        restorePresentation();
         if (motionPreference.matches || document.hidden) {
-            renderResult(rooms);
             return Promise.resolve();
         }
         board.setAttribute("aria-busy", "true");
-        drawStatus.textContent = "抽選中です。まもなく部屋ごとに発表します。";
+        drawStatus.textContent = "抽選中です。演出が終わったら、ボタンで1部屋ずつ発表できます。";
         return new Promise((resolve) => {
             let shuffling = true;
             finishAnimation = () => {
@@ -280,7 +310,7 @@
                 animationTimers.forEach(cancelTimer);
                 animationTimers.clear();
                 finishAnimation = null;
-                renderResult(rooms);
+                restorePresentation();
                 resolve();
             };
             // These shuffled names are visual placeholders, never the draw result.
@@ -303,18 +333,7 @@
                 scheduleAnimation(shuffleFrame, 120);
             };
             shuffleFrame();
-            scheduleAnimation(() => {
-                shuffling = false;
-                resetBoard("発表待ち");
-                board.setAttribute("aria-busy", "true");
-            }, 2000);
-            rooms.forEach((room, index) => {
-                scheduleAnimation(() => {
-                    revealRoom(room, index, true);
-                    drawStatus.textContent = `${room.name}が決まりました。 ${index + 1} / ${rooms.length}部屋`;
-                }, 2000 + index * 650);
-            });
-            scheduleAnimation(() => { if (finishAnimation) finishAnimation(); }, 5200);
+            scheduleAnimation(() => { if (finishAnimation) finishAnimation(); }, 2000);
         });
     }
 
@@ -335,14 +354,11 @@
             if (operation !== state.operation) return;
             state.participants = validateParticipants(data, names);
             state.result = null;
+            state.revealedCount = 0;
             roster.value = state.participants.join("\n");
             readRoster();
-            resetBoard();
+            restorePresentation();
             resetCopy();
-            copyButton.hidden = true;
-            drawButton.textContent = "抽選開始";
-            presentationTitle.textContent = "部屋割り抽選";
-            drawStatus.textContent = "準備ができました。「抽選開始」を押してください。";
             setupView.hidden = true;
             presentationView.hidden = false;
             presentationTitle.focus();
@@ -362,7 +378,7 @@
     });
 
     element("edit-button").addEventListener("click", () => {
-        if (state.busy) return;
+        if (state.busy || hasUnrevealedRooms()) return;
         clearError();
         resetCopy();
         presentationView.hidden = true;
@@ -372,7 +388,7 @@
     });
 
     drawButton.addEventListener("click", async () => {
-        if (state.busy || !state.participants.length) return;
+        if (state.busy || !state.participants.length || hasUnrevealedRooms()) return;
         const operation = ++state.operation;
         setBusy(true);
         clearError();
@@ -386,9 +402,8 @@
             if (operation !== state.operation) return;
             const rooms = validateRooms(data);
             state.result = rooms;
-            drawButton.textContent = "発表中";
-            await animateResult(rooms);
-            if (operation === state.operation && !document.hidden) presentationTitle.focus({ preventScroll: true });
+            state.revealedCount = 0;
+            await animateShuffle();
         } catch (error) {
             if (operation !== state.operation) return;
             showError(error);
@@ -399,8 +414,19 @@
             if (operation === state.operation) {
                 drawButton.textContent = state.result ? "全員を再抽選" : "抽選開始";
                 setBusy(false);
+                if (hasUnrevealedRooms() && !document.hidden) revealButton.focus({ preventScroll: true });
             }
         }
+    });
+
+    revealButton.addEventListener("click", () => {
+        if (state.busy || !hasUnrevealedRooms()) return;
+        const index = state.revealedCount;
+        revealRoom(state.result[index], index, !motionPreference.matches);
+        state.revealedCount += 1;
+        updatePresentation();
+        setBusy(false);
+        if (!hasUnrevealedRooms()) copyButton.focus({ preventScroll: true });
     });
 
     function resultText() {
@@ -452,7 +478,7 @@
     }
 
     copyButton.addEventListener("click", async () => {
-        if (state.busy || !state.result) return;
+        if (state.busy || !state.result || hasUnrevealedRooms()) return;
         const operation = ++state.operation;
         const text = resultText();
         setBusy(true);
@@ -503,9 +529,7 @@
         timers.clear();
         animationTimers.clear();
         prepareButton.textContent = "抽選画面へ";
-        drawButton.textContent = state.result ? "全員を再抽選" : "抽選開始";
-        if (state.result) renderResult(state.result);
-        else drawStatus.textContent = "準備ができました。「抽選開始」を押してください。";
+        restorePresentation();
         copyStatus.textContent = "";
         setBusy(false);
     });
