@@ -68,6 +68,7 @@ INSTALLED_APPS = [
     'accounts.apps.AccountsConfig',
     #ルーレットアプリ
     'roulette_app',
+    'room_draw.apps.RoomDrawConfig',
     #ロボ団タイマーアプリ
     'robodone_timer',
     'reading_notes.apps.ReadingNotesConfig',

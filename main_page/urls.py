@@ -31,6 +31,7 @@ urlpatterns = [
     path('accounts/', include('accounts.urls')),
     #ルーレット
     path('roulette/', include('roulette_app.urls')),
+    path('room-draw/', include('room_draw.urls')),
     #ロボ団タイマー
     path('robodonetimer/', include('robodone_timer.urls')),
     path('reading/', include('reading_notes.urls')),
